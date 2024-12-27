@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Head from "next/head";
 import { Poppins } from "next/font/google";
 
 const poppins = Poppins({
@@ -20,9 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={poppins.variable}>
       <body className="bg-black">
-        <Header />
         <main>{children}</main>
-        <Footer />
       </body>
     </html>
   );

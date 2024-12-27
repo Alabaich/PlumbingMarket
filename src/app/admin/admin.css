@@ -1,0 +1,9 @@
+:root {
+    --background: #fff;
+    --foreground: #2c2d2c;
+  }
+
+  .admin-sidebar button,
+  .admin-sidebar a{
+    font-size: .8125rem;
+  }

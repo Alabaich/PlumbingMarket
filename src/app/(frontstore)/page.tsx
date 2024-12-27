@@ -1,8 +1,8 @@
- import SliderWithBlocks from "./components/SliderWithBlocks";
- import CollectionLinks from "./components/CollectionLinks";
+ import SliderWithBlocks from "../components/SliderWithBlocks";
+ import CollectionLinks from "../components/CollectionLinks";
 // import { motion } from "framer-motion"
 
-import AnimatedTitle from "./components/AnimatedTitle";
+import AnimatedTitle from "../components/AnimatedTitle";
 
 export default function HomePage() {
   return (

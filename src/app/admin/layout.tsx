@@ -1,33 +1,41 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from "./components/Sidebar";
-import { Suspense, lazy } from "react";
+import Header from "./components/Header";
+import Login from './login/page';
+import './admin.css';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [selectedPage, setSelectedPage] = useState("dashboard");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
 
-  // Lazy load components for each section
-  const pages: { [key: string]: React.LazyExoticComponent<React.FC> } = {
-    dashboard: lazy(() => import("./pages/Dashboard")),
-    users: lazy(() => import("./pages/Users")),
-    products: lazy(() => import("./pages/Products")),
-    orders: lazy(() => import("./pages/Orders")),
-    settings: lazy(() => import("./pages/Settings")),
-  };
+  useEffect(() => {
+    const authStatus = localStorage.getItem('authenticated') === 'true';
+    setIsAuthenticated(authStatus);
+    if (!authStatus) {
+      router.push('/admin/login');
+    }
+  }, [router]);
 
-  const SelectedPage = pages[selectedPage];
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <Sidebar selectedPage={selectedPage} onSelectPage={setSelectedPage} />
+    <div className="flex flex-col h-screen" style={{ background: 'linear-gradient(90deg, #F3F6F8 0%, #E6ECF1 100%)' }}>
+      {/* Header */}
+      <Header />
 
-      {/* Main Content */}
-      <div className="flex-grow p-6 bg-gray-100">
-        <Suspense fallback={<div>Loading...</div>}>
-          <SelectedPage />
-        </Suspense>
+      <div className="flex flex-grow">
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content */}
+        <div className="flex-grow p-6">
+          {children}
+        </div>
       </div>
     </div>
   );
