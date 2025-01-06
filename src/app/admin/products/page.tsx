@@ -1,21 +1,35 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import DataTable from '../components/DataTable';
 import Image from 'next/image';
+import Link from 'next/link';
+
+interface MediaItem {
+  id: string;
+  url: string;
+  alt: string;
+}
 
 interface Product {
-  slug: string; 
-  img: string;
+  slug: string;
+  img: string; // Resolved first image URL
   product: string;
   sku: string;
   vendor: string;
   type: string; // Product type
   published: boolean; // Active/Draft status
-  tags: string[]; // Product tags
-  [key: string]: unknown; // Add this index signature
+  tags: string[];
+  [key: string]: unknown;// Product tags
 }
+
+const productColumns = [
+  { label: 'Image', accessor: (row: Product) => <img src={row.img} alt={row.product} className="h-16 w-16 object-cover rounded-md" /> },
+  { label: 'Product', accessor: (row: Product) => <Link href={`/admin/products/${row.slug}`} className="text-blue-500 underline hover:text-blue-700">{row.product}</Link> },
+  { label: 'SKU', accessor: 'sku' },
+  { label: 'Vendor', accessor: 'vendor' },
+];
 
 const getIconPath = (name: string) => `/icons/${name.toLowerCase()}.svg`;
 
@@ -42,27 +56,33 @@ const Products: React.FC = () => {
       const querySnapshot = await getDocs(productsCollection);
 
       const fetchedProducts: Product[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const firstImage = data.images?.[0]?.src || ''; // Get the first image URL
-        const productName = data.title || ''; // Get product title
-        const sku = Object.keys(data.variants || {})[0] || ''; // Get the first variant SKU
-        const vendor = data.vendor || ''; // Get vendor name
-        const type = data.type || ''; // Get product type
-        const published = data.published || false; // Get active/draft status
-        const tags = data.tags || []; // Get product tags
+
+      for (const docSnap of querySnapshot.docs) {
+        const data = docSnap.data();
+
+        // Resolve the first image from the `media` collection
+        const firstImageId = data.images?.[0] || null;
+        let firstImage: MediaItem | null = null;
+
+        if (firstImageId) {
+          const mediaDocRef = doc(db, 'media', firstImageId);
+          const mediaDocSnap = await getDoc(mediaDocRef);
+          if (mediaDocSnap.exists()) {
+            firstImage = mediaDocSnap.data() as MediaItem;
+          }
+        }
 
         fetchedProducts.push({
-          slug: doc.id,
-          img: firstImage,
-          product: productName,
-          sku: sku,
-          vendor: vendor,
-          type: type,
-          published: published,
-          tags: tags,
+          slug: docSnap.id,
+          img: firstImage?.url || '', // Use resolved image URL or fallback
+          product: data.title || '', // Get product title
+          sku: Object.keys(data.variants || {})[0] || '', // Get the first variant SKU
+          vendor: data.vendor || '', // Get vendor name
+          type: data.type || '', // Get product type
+          published: data.published || false, // Get active/draft status
+          tags: data.tags || [], // Get product tags
         });
-      });
+      }
 
       setProducts(fetchedProducts);
     };
@@ -80,8 +100,8 @@ const Products: React.FC = () => {
       publishedFilter === ''
         ? true
         : publishedFilter === 'active'
-        ? product.published
-        : !product.published;
+          ? product.published
+          : !product.published;
     const matchesTag = tagFilter ? product.tags.includes(tagFilter) : true;
 
     return matchesSearch && matchesVendor && matchesType && matchesPublished && matchesTag;
@@ -119,79 +139,78 @@ const Products: React.FC = () => {
               </div>
 
               <div className="filters flex flex-wrap gap-4">
-                {/* Vendor Filter */}
+                {/* Tagged Filter */}
                 <div className="filter flex items-center gap-2">
-                <p className="text-xs text-gray-300">Vendor:</p>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="cursor-pointer text-xs py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
-                >
-                  <option value="">All</option>
-                  {products.map((product, index) => (
-                    <option key={index} value={product.vendor}>
-                      {product.vendor}
-                    </option>
-                  ))}
-                </select>
-                </div>
+                  <p className="text-xs text-gray-300">Tags:</p>
+                  <select
+                    value={tagFilter}
+                    onChange={(e) => setTagFilter(e.target.value)}
+                    className="cursor-pointer text-xs py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
+                  >
 
+                    <option value="">All</option>
+                    {allTags.map((tag, index) => (
+                      <option key={index} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Active/Draft Filter */}
+                <div className="filter flex items-center gap-2">
+                  <p className="text-xs text-gray-300">Status:</p>
+                  <select
+                    value={publishedFilter}
+                    onChange={(e) => setPublishedFilter(e.target.value)}
+                    className="cursor-pointer text-xs  py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
+                  >
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="draft">Draft</option>
+                  </select>
+                </div>
 
                 {/* Product Type Filter */}
                 <div className="filter flex items-center gap-2">
-                <p className="text-xs  text-gray-300">Product Type:</p>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="cursor-pointer text-xs  py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
-                >
-                  <option value="">All</option>
-                  {Array.from(new Set(products.map((product) => product.type))).map((type, index) => (
-                    <option key={index} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                  <p className="text-xs  text-gray-300">Product Type:</p>
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="cursor-pointer text-xs  py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
+                  >
+                    <option value="">All</option>
+                    {Array.from(new Set(products.map((product) => product.type))).map((type, index) => (
+                      <option key={index} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-
-                {/* Active/Draft Filter */}
+                {/* Vendor Filter */}
                 <div className="filter flex items-center gap-2">
-                <p className="text-xs text-gray-300">Status:</p>
-                <select
-                  value={publishedFilter}
-                  onChange={(e) => setPublishedFilter(e.target.value)}
-                  className="cursor-pointer text-xs  py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
-                >
-                  <option value="">All</option>
-                  <option value="active">Active</option>
-                  <option value="draft">Draft</option>
-                </select>
+                  <p className="text-xs text-gray-300">Vendor:</p>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="cursor-pointer text-xs py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
+                  >
+                    <option value="">All</option>
+                    {products.map((product, index) => (
+                      <option key={index} value={product.vendor}>
+                        {product.vendor}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-
-                {/* Tagged Filter */}
-                <div className="filter flex items-center gap-2">
-                <p className="text-xs text-gray-300">Tags:</p>
-                <select
-                  value={tagFilter}
-                  onChange={(e) => setTagFilter(e.target.value)}
-                  className="cursor-pointer text-xs py-[3px] px-4 border border-gray-300 rounded-full text-gray-300 appearance-none focus:outline-none focus:border-gray-400 focus:text-gray-600"
-                >
-                  
-                  <option value="">All</option>
-                  {allTags.map((tag, index) => (
-                    <option key={index} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
-                </div>
-
+                {/* Other filters (Type, Status, Tags) remain unchanged */}
               </div>
             </div>
           </div>
-          <DataTable<Product> columns={columns} data={filteredData} />
+          <DataTable
+            columns={productColumns}
+            data={filteredData}
+            rowKey={(row) => row.slug}
+          />
         </div>
       </div>
     </main>

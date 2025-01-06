@@ -27,7 +27,7 @@ const ProductTitleDescription: React.FC<ProductTitleDescriptionProps> = ({
   };
 
   return (
-    <div className="w-[80%] p-4 rounded-md flex flex-col gap-4 bg-white">
+    <div className=" p-4 rounded-md flex flex-col gap-4 bg-white">
       <div>
         <label className="block text-sm font-medium text-gray-700">Title</label>
         <input

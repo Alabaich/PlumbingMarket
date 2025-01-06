@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import ProductTitleDescription from './components/ProductTitleDescription';
 import ProductStatus from './components/ProductStatus';
-
-interface Product {
-  title: string;
-  description: string;
-  published: boolean;
-}
+import MediaManager from './components/MediaManager';
+import ProductTags from './components/ProductTags';
+import ProductOrganization from './components/ProductOrganization';
+import { Product, MediaItem, Variant } from './types';
+import ProductVariants from './components/ProductVariants';
 
 const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ params }) => {
   const [productSlug, setProductSlug] = useState<string | null>(null);
@@ -32,15 +31,40 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
     const fetchProduct = async () => {
       try {
         const db = getFirestore();
-        const productDoc = doc(db, 'products', productSlug);
+        const productDoc = doc(db, 'products', productSlug!);
         const docSnap = await getDoc(productDoc);
 
         if (docSnap.exists()) {
-          const data = docSnap.data();
+          const productData = docSnap.data();
+          const imageIds = productData.images || [];
+
+          // Fetch all media items
+          const mediaCollection = collection(db, 'media');
+          const mediaDocs = await getDocs(mediaCollection);
+
+          // Map media items to their IDs, ensuring all required properties are included
+          const mediaItemsMap = mediaDocs.docs.reduce((acc, doc) => {
+            const data = doc.data();
+            if (data.url && data.alt) {
+              acc[doc.id] = { id: doc.id, alt: data.alt, url: data.url }; // Ensure `alt` and `url` are present
+            }
+            return acc;
+          }, {} as Record<string, MediaItem>);
+
+          // Sort media items based on the order in `imageIds`
+          const sortedMediaItems = imageIds
+            .map((id: string) => mediaItemsMap[id]) // Map IDs to media items
+            .filter((item: MediaItem | undefined) => item !== undefined); // Remove undefined items
+
           setProduct({
-            title: data.title || '',
-            description: data.description || '',
-            published: data.published || false,
+            title: productData.title || '',
+            description: productData.description || '',
+            published: productData.published || false,
+            images: sortedMediaItems, // Use sorted media items
+            tags: productData.tags || [],
+            type: productData.type || '',
+            vendor: productData.vendor || '',
+            variants: productData.variants || {},
           });
         } else {
           console.error('No product found for the provided slug');
@@ -52,26 +76,57 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       }
     };
 
+
+
     fetchProduct();
   }, [productSlug]);
 
   const handleSave = async (updatedProduct: Product) => {
     if (!productSlug) return;
     setSaving(true);
-  
+
     try {
       const db = getFirestore();
       const productDoc = doc(db, 'products', productSlug);
-  
-      // Convert `Product` to Firestore-compatible update object
-      const updateData: { [key: string]: any } = {
+
+      const updateData = {
         title: updatedProduct.title,
         description: updatedProduct.description,
+        images: updatedProduct.images.map((image) => image.id), // Save image IDs only
+        tags: updatedProduct.tags, // Save updated tags
+        type: updatedProduct.type, // Save product type
+        vendor: updatedProduct.vendor,
+        published: updatedProduct.published,
       };
-  
+
       await updateDoc(productDoc, updateData);
-  
-      setProduct(updatedProduct); // Update state with the saved product
+
+      // Re-fetch product after updating to ensure the latest data is in sync
+      const docSnap = await getDoc(productDoc);
+      if (docSnap.exists()) {
+        const productData = docSnap.data();
+        const imageIds = productData.images || [];
+
+        // Fetch media items by their IDs
+        const mediaCollection = collection(db, 'media');
+        const mediaDocs = await getDocs(mediaCollection);
+
+        const mediaItems = mediaDocs.docs
+          .filter((doc) => imageIds.includes(doc.id))
+          .map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        setProduct({
+          title: productData.title || '',
+          description: productData.description || '',
+          published: productData.published || false,
+          images: mediaItems as MediaItem[],
+          tags: productData.tags || [],
+          type: productData.type || '',
+          vendor: productData.vendor || '',
+          variants: productData.variants || {},
+        });
+      }
+
       alert('Product saved successfully!');
     } catch (error) {
       console.error('Error saving product:', error);
@@ -80,7 +135,8 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       setSaving(false);
     }
   };
-  
+
+
 
   if (loading) {
     return <div className="text-center mt-6">Loading...</div>;
@@ -102,19 +158,50 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
           {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
-      <div className="w-full flex gap-2">
-      <ProductTitleDescription
-        product={product}
-        onChange={(updatedFields) =>
-          setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-        }
-      />
-            <ProductStatus
-        published={product.published}
-        onChange={(updatedFields) =>
-          setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-        }
-      />
+      <div className="w-full flex gap-4">
+        <div className="flex flex-col gap-4 w-[80%]">
+          <ProductTitleDescription
+            product={product}
+            onChange={(updatedFields) =>
+              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+            }
+          />
+          <MediaManager
+            productSlug={productSlug!}
+            images={product.images || []} // Pass the images array
+            onImagesUpdate={(updatedImages) =>
+              setProduct((prev) => ({ ...prev, images: updatedImages } as Product))
+            }
+          />
+          <ProductVariants 
+  productSlug={productSlug!} 
+  variants={product.variants || {}} 
+/>
+
+
+
+        </div>
+        <div className="flex flex-col gap-4 w-[20%] ">
+          <ProductStatus
+            published={product.published}
+            onChange={(updatedFields) =>
+              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+            }
+          />
+          <ProductTags
+            tags={product.tags || []}
+            onTagsUpdate={(updatedTags) =>
+              setProduct((prev) => ({ ...prev, tags: updatedTags } as Product))
+            }
+          />
+          <ProductOrganization
+            product={{ type: product.type, vendor: product.vendor }}
+            onChange={(updatedFields) =>
+              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+            }
+          />
+        </div>
+
 
       </div>
 
