@@ -94,12 +94,22 @@ const Sidebar: React.FC = () => {
           </button>
           {openDropdown === 'products' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
-              <li>
-                <Link href="/admin/products" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
-                  Products
-                </Link>
-              </li>
-            </ul>
+            <li>
+              <Link href="/admin/products" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                Products
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/products/collections" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products/collections') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                Collections
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/inventory" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/inventory') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                Inventory
+              </Link>
+            </li>
+          </ul>
           )}
         </li>
         <li className="mb-2">

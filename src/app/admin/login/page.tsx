@@ -33,7 +33,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
+    <div className='bg-gray-100 h-screen w-screen'>
       <h1>Admin Login</h1>
       <button onClick={handleLogin}>
         Sign in with Google
