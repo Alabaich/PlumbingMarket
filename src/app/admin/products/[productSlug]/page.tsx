@@ -9,6 +9,7 @@ import ProductTags from './components/ProductTags';
 import ProductOrganization from './components/ProductOrganization';
 import { Product, MediaItem, Variant } from './types';
 import ProductVariants from './components/ProductVariants';
+import ProductDetails from './components/ProductDetails';
 
 const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ params }) => {
   const [productSlug, setProductSlug] = useState<string | null>(null);
@@ -65,6 +66,12 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             type: productData.type || '',
             vendor: productData.vendor || '',
             variants: productData.variants || {},
+            finish: productData.finish || '', // Add missing fields
+            lead_time: productData.lead_time || '',
+            warranty: productData.warranty || '',
+            technical_specifications: productData.technical_specifications || '',
+            installation_and_maintenance: productData.installation_and_maintenance || '',
+            sqft: productData.sqft || '',
           });
         } else {
           console.error('No product found for the provided slug');
@@ -124,6 +131,12 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
           type: productData.type || '',
           vendor: productData.vendor || '',
           variants: productData.variants || {},
+          finish: productData.finish || '',
+          lead_time: productData.lead_time || '',
+          warranty: productData.warranty || '',
+          technical_specifications: productData.technical_specifications || '',
+          installation_and_maintenance: productData.installation_and_maintenance || '',
+          sqft: productData.sqft || '',
         });
       }
 
@@ -173,10 +186,18 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
               setProduct((prev) => ({ ...prev, images: updatedImages } as Product))
             }
           />
-          <ProductVariants 
-  productSlug={productSlug!} 
-  variants={product.variants || {}} 
-/>
+          <ProductVariants
+            productSlug={productSlug!}
+            variants={product.variants || {}}
+          />
+
+          <ProductDetails
+            product={product}
+            onChange={(updatedFields) =>
+              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+            }
+          />
+
 
 
 

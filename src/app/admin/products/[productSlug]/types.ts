@@ -33,5 +33,11 @@ export interface MediaItem {
     type: string;
     vendor: string;
     variants: Record<string, Variant>;
+    finish: string;
+    lead_time: string;
+    warranty: string;
+    technical_specifications: string;
+    installation_and_maintenance: string;
+    sqft: string;
   }
   
