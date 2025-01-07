@@ -42,11 +42,11 @@ function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
   if (authInitialized && isAuthenticated && role === 'admin') {
     return (
       <div
-        className="flex flex-col h-screen"
+        className="flex flex-col"
         style={{ background: 'linear-gradient(90deg, #F3F6F8 0%, #E6ECF1 100%)' }}
       >
         <Header />
-        <div className="flex flex-grow">
+        <div className="flex flex-grow max-w">
           <Sidebar />
           <main className="flex-grow p-4">{children}</main>
         </div>

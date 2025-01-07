@@ -39,5 +39,13 @@ export interface MediaItem {
     technical_specifications: string;
     installation_and_maintenance: string;
     sqft: string;
+    price: number;
+    cost: number;
+    compare_at_price: number;
+    taxable: boolean;
+    sku: string;
+    barcode: string;
+    weight: number;
+    requires_shipping: boolean; 
   }
   

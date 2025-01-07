@@ -11,7 +11,7 @@ interface ProductVariantsProps {
 
 const ProductVariants: React.FC<ProductVariantsProps> = ({ productSlug, variants }) => {
     return (
-        <div className="p-4 bg-white shadow-md rounded-md flex flex-col gap-4">
+        <div className="p-4 bg-white shadow-sm rounded-md flex flex-col gap-4">
             <h3 className="text-lg font-sm text-gray-700">Variants</h3>
             {Object.entries(variants).map(([sku, variant]) => (
                 <div key={sku} className="flex flex-col gap-2">

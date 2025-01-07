@@ -10,6 +10,10 @@ import ProductOrganization from './components/ProductOrganization';
 import { Product, MediaItem, Variant } from './types';
 import ProductVariants from './components/ProductVariants';
 import ProductDetails from './components/ProductDetails';
+import ProductAdditionalDetails from './components/ProductAdditional';
+import ProductPricingDetails from './components/Pricing';
+import InventoryDetails from './components/InventoryDetails';
+import ShippingDetails from './components/ShippingDetails';
 
 const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ params }) => {
   const [productSlug, setProductSlug] = useState<string | null>(null);
@@ -72,6 +76,14 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             technical_specifications: productData.technical_specifications || '',
             installation_and_maintenance: productData.installation_and_maintenance || '',
             sqft: productData.sqft || '',
+            price: productData.price || '', // Add price
+            cost: productData.cost || '', // Add cost
+            compare_at_price: productData.compare_at_price || '',
+            taxable: productData.taxable || false,
+            sku: productData.sku || '',
+            barcode: productData.barcode || '',
+            weight: productData.weight || 0,
+            requires_shipping: productData.requires_shipping || false,
           });
         } else {
           console.error('No product found for the provided slug');
@@ -104,6 +116,22 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
         type: updatedProduct.type, // Save product type
         vendor: updatedProduct.vendor,
         published: updatedProduct.published,
+
+        variants: updatedProduct.variants,
+        finish: updatedProduct.finish,
+        lead_time: updatedProduct.lead_time,
+        warranty: updatedProduct.warranty,
+        technical_specifications: updatedProduct.technical_specifications,
+        installation_and_maintenance: updatedProduct.installation_and_maintenance,
+        sqft: updatedProduct.sqft,
+        price: updatedProduct.price, // Add price
+        cost: updatedProduct.cost, // Add cost
+        compare_at_price: updatedProduct.compare_at_price,
+        taxable: updatedProduct.taxable || false,
+        sku: updatedProduct.sku,
+        barcode: updatedProduct.barcode,
+        weight: updatedProduct.weight,
+        requires_shipping: updatedProduct.requires_shipping,
       };
 
       await updateDoc(productDoc, updateData);
@@ -124,7 +152,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
         setProduct({
           title: productData.title || '',
-          description: productData.description || '',
+          description: updatedProduct.description,
           published: productData.published || false,
           images: mediaItems as MediaItem[],
           tags: productData.tags || [],
@@ -137,6 +165,14 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
           technical_specifications: productData.technical_specifications || '',
           installation_and_maintenance: productData.installation_and_maintenance || '',
           sqft: productData.sqft || '',
+          price: productData.price || '', // Add price
+          cost: productData.cost || '', // Add cost
+          compare_at_price: productData.compare_at_price || '',
+          taxable: productData.taxable || false,
+          sku: productData.sku || '',
+          barcode: productData.barcode || '',
+          weight: productData.weight || 0,
+          requires_shipping: productData.requires_shipping || false,
         });
       }
 
@@ -160,9 +196,10 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
   }
 
   return (
-    <div className="p-2 w-full flex flex-col gap-4">
-      <div className="flex bg-white rounded-md p-4 justify-between items-center">
-        <h1 className="text-xl">{product.title}</h1>
+    <div className="p-2 w-full flex flex-col gap-4 max-w-[100%]">
+      <div className="flex bg-white rounded-md p-2 justify-between items-center">
+        {/* <h1 className="text-xl">{product.title}</h1> */}
+        <p></p>
         <button
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
           onClick={() => handleSave(product)}
@@ -172,7 +209,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
         </button>
       </div>
       <div className="w-full flex gap-4">
-        <div className="flex flex-col gap-4 w-[80%]">
+        <div className="flex flex-col gap-4 w-[80%] max-w-[80%]">
           <ProductTitleDescription
             product={product}
             onChange={(updatedFields) =>
@@ -198,6 +235,34 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             }
           />
 
+          <ProductAdditionalDetails
+            product={product}
+            onChange={(updatedFields) =>
+              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+            }
+          />
+<ProductPricingDetails
+  product={{
+    price: product.price,
+    cost: product.cost,
+    compare_at_price: product.compare_at_price,
+    taxable: product.taxable,
+  }}
+  onChange={(updatedFields) =>
+    setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+  }
+/>
+<ShippingDetails
+  product={{
+    requires_shipping: product.requires_shipping,
+    weight: product.weight,
+  }}
+  onChange={(updatedFields) =>
+    setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+  }
+/>
+
+
 
 
 
@@ -221,6 +286,17 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
               setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
             }
           />
+
+<InventoryDetails
+  product={{
+    sku: product.sku,
+    barcode: product.barcode,
+  }}
+  onChange={(updatedFields) =>
+    setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
+  }
+/>
+
         </div>
 
 

@@ -20,7 +20,7 @@ const Sidebar: React.FC = () => {
   const isActive = (path: string) => currentPath === path;
 
   return (
-    <div className="admin-sidebar w-64 h-full flex flex-col justify-between pb-8">
+    <div className="admin-sidebar w-64 h-full flex flex-col justify-between pb-8 min-w-[256px]">
       <ul className="p-4">
         <li className="mb-2">
           <Link

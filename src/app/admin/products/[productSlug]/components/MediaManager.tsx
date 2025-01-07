@@ -8,6 +8,9 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import Image from 'next/image';
+import { getFirestore, doc, setDoc, updateDoc } from 'firebase/firestore';
+
+
 
 interface ImageItem {
   id: string;
@@ -16,16 +19,20 @@ interface ImageItem {
 }
 
 interface MediaManagerProps {
-    productSlug: string; // Now included in the props interface
-    images: ImageItem[];
-    onImagesUpdate: (updatedImages: ImageItem[]) => void;
-  }
-  
+  productSlug: string; // Now included in the props interface
+  images: ImageItem[];
+  onImagesUpdate: (updatedImages: ImageItem[]) => void;
+}
 
-const MediaManager: React.FC<MediaManagerProps> = ({ images, onImagesUpdate }) => {
+const MediaManager: React.FC<MediaManagerProps> = ({
+  images,
+  onImagesUpdate,
+  productSlug,
+}) => {
   const [localImages, setLocalImages] = useState<ImageItem[]>(images || []);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState<number | null>(null); // Dragging state
+  const [isDragOverUpload, setIsDragOverUpload] = useState(false); // Drag-over state for upload zone
 
   const convertToWebP = async (file: File): Promise<File> => {
     const bitmap = await createImageBitmap(file);
@@ -53,41 +60,58 @@ const MediaManager: React.FC<MediaManagerProps> = ({ images, onImagesUpdate }) =
 
   const uploadMedia = async (file: File): Promise<ImageItem> => {
     const storage = getStorage();
-
+  
     const webpFile = await convertToWebP(file); // Convert to .webp
     const mediaId = `media_${Date.now()}`; // Generate unique ID
     const storageRef = ref(storage, `media/${mediaId}`); // Path in Firebase Storage
-
+  
     await uploadBytes(storageRef, webpFile); // Upload .webp file
     const url = await getDownloadURL(storageRef); // Get public URL
-
+  
+    // Update Firestore with the media entry
+    const db = getFirestore();
+    const mediaDocRef = doc(db, 'media', mediaId);
+  
+    await setDoc(mediaDocRef, {
+      id: mediaId,
+      alt: file.name.split('.')[0],
+      url,
+      type: 'image',
+      created_at: new Date().toISOString(),
+    });
+  
     return { id: mediaId, alt: file.name.split('.')[0], url };
   };
-
+  
   const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
-
+  
     setUploading(true);
     try {
       const uploadedImages = await Promise.all(
         Array.from(files).map((file) => uploadMedia(file))
       );
-
+  
       const updatedImages = [...localImages, ...uploadedImages];
       setLocalImages(updatedImages);
-      onImagesUpdate(updatedImages); // Notify parent about the updated array
+  
+      // Update Firestore product with the new image order
+      const db = getFirestore();
+      const productDoc = doc(db, 'products', productSlug);
+  
+      await updateDoc(productDoc, {
+        images: updatedImages.map((image) => image.id),
+      });
+  
+      onImagesUpdate(updatedImages); // Ensure parent component is updated
     } catch (error) {
       console.error('Error uploading media:', error);
     } finally {
       setUploading(false);
     }
   };
-
-  const handleDragStart = (index: number) => {
-    setDragging(index);
-  };
-
-  const handleDragOver = (index: number) => {
+  
+  const handleDragOverImage = (index: number) => {
     if (dragging === null || dragging === index) return;
   
     const reorderedImages = [...localImages];
@@ -95,10 +119,58 @@ const MediaManager: React.FC<MediaManagerProps> = ({ images, onImagesUpdate }) =
     reorderedImages.splice(index, 0, draggedItem);
   
     setLocalImages(reorderedImages);
-    onImagesUpdate(reorderedImages); // Notify parent about the updated order
+  
+    // Update Firestore with the reordered images
+    const db = getFirestore();
+    const productDoc = doc(db, 'products', productSlug);
+  
+    updateDoc(productDoc, {
+      images: reorderedImages.map((image) => image.id),
+    });
+  
+    onImagesUpdate(reorderedImages); // Ensure parent component is updated
     setDragging(index);
   };
   
+
+  const handleDragStart = (index: number) => {
+    setDragging(index);
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    const updatedImages = localImages.filter((image) => image.id !== imageId);
+    setLocalImages(updatedImages);
+  
+    // Update Firestore product with the new image order
+    const db = getFirestore();
+    const productDoc = doc(db, 'products', productSlug);
+  
+    await updateDoc(productDoc, {
+      images: updatedImages.map((image) => image.id),
+    });
+  
+    onImagesUpdate(updatedImages); // Notify the parent about the updated images
+  };
+
+  
+  const handleDragOverUpload = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOverUpload(true); // Indicate the user is dragging over the upload zone
+  };
+
+  const handleDropUpload = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOverUpload(false);
+
+    const files = event.dataTransfer.files;
+    if (files) {
+      handleFileUpload(files);
+    }
+  };
+
+  const handleDragLeaveUpload = () => {
+    setIsDragOverUpload(false);
+  };
 
   const handleDragEnd = () => {
     setDragging(null);
@@ -106,33 +178,57 @@ const MediaManager: React.FC<MediaManagerProps> = ({ images, onImagesUpdate }) =
 
   return (
     <div className="p-4 bg-white rounded-md">
+      <h3 className="text-lg font-sm text-gray-700">Media:</h3>
       {uploading && <p className="mt-4 text-blue-500">Uploading...</p>}
 
-      <div className="mt-4 flex wrap gap-4">
+      <div className="grid grid-cols-5 gap-4 mt-4">
         {localImages.map((item, index) => (
           <div
             key={item.id}
-            className={`relative w-[150px] h-[150px] object-cover rounded-md ${
+            className={`relative ${
+              index === 0
+                ? 'col-span-2 row-span-2' // First image spans 2 columns and 2 rows
+                : ''
+            } rounded-md overflow-hidden ${
               dragging === index ? 'border-2 border-blue-500' : ''
             }`}
             draggable
             onDragStart={() => handleDragStart(index)}
-            onDragOver={() => handleDragOver(index)}
+            onDragOver={() => handleDragOverImage(index)}
             onDragEnd={handleDragEnd}
           >
-            <img
-              src={item.url}
-              alt={item.alt}
-              className="w-full h-full object-cover rounded-md"
-            />
+            <div className="aspect-square w-full h-auto">
+              <img
+                src={item.url}
+                alt={item.alt}
+                className="w-full h-full object-cover"
+              />
+                    <button
+        onClick={() => handleDeleteImage(item.id)}
+        className="absolute top-2 right-2 bg-white rounded-sm text-white rounded-sm w-6 h-6 flex items-center justify-center shadow-sm hover:shadow-md transition-all"
+        title="Delete Image"
+      >
+        <Image
+          src="/icons/trash full small.svg"
+          alt="Delete Icon"
+          width={16}
+          height={16}
+        />
+      </button>
+            </div>
           </div>
         ))}
-        <div
-          className={`w-[150px] h-[150px] flex items-center justify-center gap-2 flex-col text-sm border-dashed border-2 rounded-md p-4 ${
-            dragging === null ? 'border-gray-300' : 'border-blue-500'
+        <label
+          htmlFor="file-upload"
+          className={`aspect-square w-full h-auto flex items-center justify-center gap-2 flex-col text-sm border-dashed border-2 rounded-md p-4 cursor-pointer ${
+            isDragOverUpload ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
           }`}
+          onDragOver={handleDragOverUpload}
+          onDragLeave={handleDragLeaveUpload}
+          onDrop={handleDropUpload}
         >
           <input
+            id="file-upload"
             type="file"
             accept="image/*"
             multiple
@@ -146,7 +242,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({ images, onImagesUpdate }) =
             width={19}
             height={19}
           />
-        </div>
+        </label>
       </div>
     </div>
   );
