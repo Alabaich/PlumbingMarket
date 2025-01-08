@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,6 +8,7 @@ import { AuthProvider, useAuth } from '../context/AuthContext'; // adjust if nee
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import './admin.css';
+import { UnsavedChangesProvider } from './context/UnsavedChangesContext'; // Import the context provider
 
 /**
  * Admin Layout:
@@ -41,16 +44,18 @@ function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
   // Render layout only for authenticated admin users
   if (authInitialized && isAuthenticated && role === 'admin') {
     return (
-      <div
-        className="flex flex-col"
-        style={{ background: 'linear-gradient(90deg, #F3F6F8 0%, #E6ECF1 100%)' }}
-      >
-        <Header />
-        <div className="flex flex-grow max-w">
-          <Sidebar />
-          <main className="flex-grow p-4">{children}</main>
+      <UnsavedChangesProvider>
+        <div
+          className="flex flex-col"
+          style={{ background: 'linear-gradient(90deg, #F3F6F8 0%, #E6ECF1 100%)' }}
+        >
+          <Header />
+          <div className="flex flex-grow max-w">
+            <Sidebar />
+            <main className="flex-grow p-4">{children}</main>
+          </div>
         </div>
-      </div>
+      </UnsavedChangesProvider>
     );
   }
 
@@ -64,7 +69,14 @@ function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <ProtectedAdminLayout>{children}</ProtectedAdminLayout>
+      <UnsavedChangesProvider>
+
+        <ProtectedAdminLayout>
+
+          {children}
+
+        </ProtectedAdminLayout>
+      </ UnsavedChangesProvider >
     </AuthProvider>
   );
 }

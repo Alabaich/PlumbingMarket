@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getFirestore, doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
 import ProductTitleDescription from './components/ProductTitleDescription';
 import ProductStatus from './components/ProductStatus';
 import MediaManager from './components/MediaManager';
 import ProductTags from './components/ProductTags';
 import ProductOrganization from './components/ProductOrganization';
-import { Product, MediaItem, Variant } from './types';
+import { Product } from './types';
 import ProductVariants from './components/ProductVariants';
 import ProductDetails from './components/ProductDetails';
 import ProductAdditionalDetails from './components/ProductAdditional';
@@ -19,8 +20,11 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
   const [productSlug, setProductSlug] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false); // State for save operation
+  const [saving, setSaving] = useState(false);
 
+  const { setUnsavedChanges } = useUnsavedChanges();
+
+  // Fetch product data on mount
   useEffect(() => {
     const unwrapParams = async () => {
       const resolvedParams = await params;
@@ -34,148 +38,44 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
     if (!productSlug) return;
 
     const fetchProduct = async () => {
-      try {
-        const db = getFirestore();
-        const productDoc = doc(db, 'products', productSlug!);
-        const docSnap = await getDoc(productDoc);
+      const db = getFirestore();
+      const productDoc = doc(db, 'products', productSlug);
+      const docSnap = await getDoc(productDoc);
 
-        if (docSnap.exists()) {
-          const productData = docSnap.data();
-          const imageIds = productData.images || [];
-
-          // Fetch all media items
-          const mediaCollection = collection(db, 'media');
-          const mediaDocs = await getDocs(mediaCollection);
-
-          // Map media items to their IDs, ensuring all required properties are included
-          const mediaItemsMap = mediaDocs.docs.reduce((acc, doc) => {
-            const data = doc.data();
-            if (data.url && data.alt) {
-              acc[doc.id] = { id: doc.id, alt: data.alt, url: data.url }; // Ensure `alt` and `url` are present
-            }
-            return acc;
-          }, {} as Record<string, MediaItem>);
-
-          // Sort media items based on the order in `imageIds`
-          const sortedMediaItems = imageIds
-            .map((id: string) => mediaItemsMap[id]) // Map IDs to media items
-            .filter((item: MediaItem | undefined) => item !== undefined); // Remove undefined items
-
-          setProduct({
-            title: productData.title || '',
-            description: productData.description || '',
-            published: productData.published || false,
-            images: sortedMediaItems, // Use sorted media items
-            tags: productData.tags || [],
-            type: productData.type || '',
-            vendor: productData.vendor || '',
-            variants: productData.variants || {},
-            finish: productData.finish || '', // Add missing fields
-            lead_time: productData.lead_time || '',
-            warranty: productData.warranty || '',
-            technical_specifications: productData.technical_specifications || '',
-            installation_and_maintenance: productData.installation_and_maintenance || '',
-            sqft: productData.sqft || '',
-            price: productData.price || '', // Add price
-            cost: productData.cost || '', // Add cost
-            compare_at_price: productData.compare_at_price || '',
-            taxable: productData.taxable || false,
-            sku: productData.sku || '',
-            barcode: productData.barcode || '',
-            weight: productData.weight || 0,
-            requires_shipping: productData.requires_shipping || false,
-          });
-        } else {
-          console.error('No product found for the provided slug');
-        }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      } finally {
-        setLoading(false);
+      if (docSnap.exists()) {
+        const productData = docSnap.data() as Product;
+        setProduct(productData);
       }
+      setLoading(false);
     };
-
-
 
     fetchProduct();
   }, [productSlug]);
 
-  const handleSave = async (updatedProduct: Product) => {
-    if (!productSlug) return;
+  // Handle input changes and mark as dirty
+  const handleInputChange = (updatedFields: Partial<Product>) => {
+    setProduct((prev) => {
+      const updatedProduct = { ...prev, ...updatedFields } as Product;
+      return updatedProduct;
+    });
+  
+    // Mark as dirty outside the state update
+    setUnsavedChanges(true);
+  };
+  
+
+  // Save changes
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!productSlug || !product) return;
+
     setSaving(true);
+    const db = getFirestore();
+    const productDoc = doc(db, 'products', productSlug);
 
     try {
-      const db = getFirestore();
-      const productDoc = doc(db, 'products', productSlug);
-
-      const updateData = {
-        title: updatedProduct.title,
-        description: updatedProduct.description,
-        images: updatedProduct.images.map((image) => image.id), // Save image IDs only
-        tags: updatedProduct.tags, // Save updated tags
-        type: updatedProduct.type, // Save product type
-        vendor: updatedProduct.vendor,
-        published: updatedProduct.published,
-
-        variants: updatedProduct.variants,
-        finish: updatedProduct.finish,
-        lead_time: updatedProduct.lead_time,
-        warranty: updatedProduct.warranty,
-        technical_specifications: updatedProduct.technical_specifications,
-        installation_and_maintenance: updatedProduct.installation_and_maintenance,
-        sqft: updatedProduct.sqft,
-        price: updatedProduct.price, // Add price
-        cost: updatedProduct.cost, // Add cost
-        compare_at_price: updatedProduct.compare_at_price,
-        taxable: updatedProduct.taxable || false,
-        sku: updatedProduct.sku,
-        barcode: updatedProduct.barcode,
-        weight: updatedProduct.weight,
-        requires_shipping: updatedProduct.requires_shipping,
-      };
-
-      await updateDoc(productDoc, updateData);
-
-      // Re-fetch product after updating to ensure the latest data is in sync
-      const docSnap = await getDoc(productDoc);
-      if (docSnap.exists()) {
-        const productData = docSnap.data();
-        const imageIds = productData.images || [];
-
-        // Fetch media items by their IDs
-        const mediaCollection = collection(db, 'media');
-        const mediaDocs = await getDocs(mediaCollection);
-
-        const mediaItems = mediaDocs.docs
-          .filter((doc) => imageIds.includes(doc.id))
-          .map((doc) => ({ id: doc.id, ...doc.data() }));
-
-        setProduct({
-          title: productData.title || '',
-          description: updatedProduct.description,
-          published: productData.published || false,
-          images: mediaItems as MediaItem[],
-          tags: productData.tags || [],
-          type: productData.type || '',
-          vendor: productData.vendor || '',
-          variants: productData.variants || {},
-          finish: productData.finish || '',
-          lead_time: productData.lead_time || '',
-          warranty: productData.warranty || '',
-          technical_specifications: productData.technical_specifications || '',
-          installation_and_maintenance: productData.installation_and_maintenance || '',
-          sqft: productData.sqft || '',
-          price: productData.price || '', // Add price
-          cost: productData.cost || '', // Add cost
-          compare_at_price: productData.compare_at_price || '',
-          taxable: productData.taxable || false,
-          sku: productData.sku || '',
-          barcode: productData.barcode || '',
-          weight: productData.weight || 0,
-          requires_shipping: productData.requires_shipping || false,
-        });
-      }
-
+      await updateDoc(productDoc, { ...product });
+      setUnsavedChanges(false); // Mark as saved
       alert('Product saved successfully!');
     } catch (error) {
       console.error('Error saving product:', error);
@@ -184,8 +84,6 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       setSaving(false);
     }
   };
-
-
 
   if (loading) {
     return <div className="text-center mt-6">Loading...</div>;
@@ -196,13 +94,11 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
   }
 
   return (
-    <div className="p-2 w-full flex flex-col gap-4 max-w-[100%]">
+    <form onSubmit={handleSave} className="p-2 w-full flex flex-col gap-4 max-w-[100%]">
       <div className="flex bg-white rounded-md p-2 justify-between items-center">
-        {/* <h1 className="text-xl">{product.title}</h1> */}
-        <p></p>
         <button
+          type="submit"
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-          onClick={() => handleSave(product)}
           disabled={saving}
         >
           {saving ? 'Saving...' : 'Save'}
@@ -210,100 +106,52 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       </div>
       <div className="w-full flex gap-4">
         <div className="flex flex-col gap-4 w-[80%] max-w-[80%]">
-          <ProductTitleDescription
-            product={product}
-            onChange={(updatedFields) =>
-              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-            }
-          />
+          <ProductTitleDescription product={product} onChange={handleInputChange} />
           <MediaManager
             productSlug={productSlug!}
-            images={product.images || []} // Pass the images array
-            onImagesUpdate={(updatedImages) =>
-              setProduct((prev) => ({ ...prev, images: updatedImages } as Product))
-            }
+            images={product.images || []}
+            onImagesUpdate={(updatedImages) => handleInputChange({ images: updatedImages })}
           />
-          <ProductVariants
-            productSlug={productSlug!}
-            variants={product.variants || {}}
+          <ProductVariants productSlug={productSlug!} variants={product.variants || {}} />
+          <ProductDetails product={product} onChange={handleInputChange} />
+          <ProductAdditionalDetails product={product} onChange={handleInputChange} />
+          <ProductPricingDetails
+            product={{
+              price: product.price,
+              cost: product.cost,
+              compare_at_price: product.compare_at_price,
+              taxable: product.taxable,
+            }}
+            onChange={handleInputChange}
           />
-
-          <ProductDetails
-            product={product}
-            onChange={(updatedFields) =>
-              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-            }
+          <ShippingDetails
+            product={{
+              requires_shipping: product.requires_shipping,
+              weight: product.weight,
+            }}
+            onChange={handleInputChange}
           />
-
-          <ProductAdditionalDetails
-            product={product}
-            onChange={(updatedFields) =>
-              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-            }
-          />
-<ProductPricingDetails
-  product={{
-    price: product.price,
-    cost: product.cost,
-    compare_at_price: product.compare_at_price,
-    taxable: product.taxable,
-  }}
-  onChange={(updatedFields) =>
-    setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-  }
-/>
-<ShippingDetails
-  product={{
-    requires_shipping: product.requires_shipping,
-    weight: product.weight,
-  }}
-  onChange={(updatedFields) =>
-    setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-  }
-/>
-
-
-
-
-
         </div>
         <div className="flex flex-col gap-4 w-[20%] ">
-          <ProductStatus
-            published={product.published}
-            onChange={(updatedFields) =>
-              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-            }
-          />
+          <ProductStatus published={product.published} onChange={handleInputChange} />
           <ProductTags
             tags={product.tags || []}
-            onTagsUpdate={(updatedTags) =>
-              setProduct((prev) => ({ ...prev, tags: updatedTags } as Product))
-            }
+            onTagsUpdate={(updatedTags) => handleInputChange({ tags: updatedTags })}
           />
           <ProductOrganization
             product={{ type: product.type, vendor: product.vendor }}
-            onChange={(updatedFields) =>
-              setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-            }
+            onChange={handleInputChange}
           />
-
-<InventoryDetails
-  product={{
-    sku: product.sku,
-    barcode: product.barcode,
-  }}
-  onChange={(updatedFields) =>
-    setProduct((prev) => ({ ...prev, ...updatedFields } as Product))
-  }
-/>
-
+          <InventoryDetails
+            product={{
+              sku: product.sku,
+              barcode: product.barcode,
+            }}
+            onChange={handleInputChange}
+          />
         </div>
-
-
       </div>
-
-
-    </div>
+    </form>
   );
 };
 
