@@ -10,6 +10,7 @@ interface UnsavedChangesContextType {
   saveChanges: () => void;
   discardChanges: () => void;
   confirmNavigation: (url: string) => void;
+  setSaveCallback: (callback: () => void) => void;
 }
 
 const UnsavedChangesContext = createContext<UnsavedChangesContextType | undefined>(undefined);
@@ -18,6 +19,8 @@ export const UnsavedChangesProvider = ({ children }: { children: ReactNode }) =>
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [shake, setShake] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [saveCallback, setSaveCallback] = useState<(() => void) | null>(null); // Add save callback
+
 
   const router = useRouter();
 
@@ -57,13 +60,19 @@ export const UnsavedChangesProvider = ({ children }: { children: ReactNode }) =>
 
 
 
+
   const saveChanges = useCallback(() => {
+    if (saveCallback) {
+      saveCallback();
+    }
     setHasUnsavedChanges(false); // Reset unsaved changes
     if (pendingNavigation) {
       router.push(pendingNavigation); // Proceed with pending navigation
       setPendingNavigation(null);
     }
-  }, [pendingNavigation, router]);
+  }, [saveCallback, pendingNavigation, router]);
+
+
 
   const discardChanges = useCallback(() => {
     setHasUnsavedChanges(false); // Reset unsaved changes
@@ -95,14 +104,14 @@ export const UnsavedChangesProvider = ({ children }: { children: ReactNode }) =>
         saveChanges,
         discardChanges,
         confirmNavigation,
+        setSaveCallback,
       }}
     >
       {children}
       {hasUnsavedChanges && (
         <div
-          className={`fixed top-0 left-0 w-full bg-gray-100 p-4 shadow-lg flex justify-between items-center transition-transform ${
-            shake ? 'shake-animation' : ''
-          }`}
+          className={`fixed top-0 left-0 w-full bg-gray-100 p-4 shadow-lg flex justify-between items-center transition-transform ${shake ? 'shake-animation' : ''
+            }`}
         >
           <p className="text-gray-800">You have unsaved changes</p>
           <div className="flex gap-2">
@@ -114,10 +123,11 @@ export const UnsavedChangesProvider = ({ children }: { children: ReactNode }) =>
             </button>
             <button
               className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded"
-              onClick={saveChanges}
+              onClick={saveChanges} // Ensure this triggers saveChanges
             >
               Save
             </button>
+
           </div>
         </div>
       )}

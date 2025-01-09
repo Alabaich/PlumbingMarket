@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
 import ProductTitleDescription from './components/ProductTitleDescription';
@@ -15,14 +15,14 @@ import ProductAdditionalDetails from './components/ProductAdditional';
 import ProductPricingDetails from './components/Pricing';
 import InventoryDetails from './components/InventoryDetails';
 import ShippingDetails from './components/ShippingDetails';
+import MediaSelectorPopup from './components/MediaSelectorPopup';
 
 const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ params }) => {
   const [productSlug, setProductSlug] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const { setUnsavedChanges } = useUnsavedChanges();
+  const { setSaveCallback, setUnsavedChanges } = useUnsavedChanges();
 
   // Fetch product data on mount
   useEffect(() => {
@@ -58,15 +58,14 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       const updatedProduct = { ...prev, ...updatedFields } as Product;
       return updatedProduct;
     });
-  
+
     // Mark as dirty outside the state update
     setUnsavedChanges(true);
   };
-  
 
-  // Save changes
-  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+
+  const handleSave = useCallback(async (e?: React.FormEvent<HTMLFormElement>) => {
+    if (e) e.preventDefault(); // Prevent form submission if triggered by a form
     if (!productSlug || !product) return;
 
     setSaving(true);
@@ -75,7 +74,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
     try {
       await updateDoc(productDoc, { ...product });
-      setUnsavedChanges(false); // Mark as saved
+      setUnsavedChanges(false);
       alert('Product saved successfully!');
     } catch (error) {
       console.error('Error saving product:', error);
@@ -83,7 +82,14 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
     } finally {
       setSaving(false);
     }
-  };
+  }, [productSlug, product, setUnsavedChanges]);
+
+
+  useEffect(() => {
+    setSaveCallback(() => handleSave);
+    return () => setSaveCallback(() => null);
+  }, [setSaveCallback, handleSave]);
+
 
   if (loading) {
     return <div className="text-center mt-6">Loading...</div>;
@@ -95,6 +101,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
   return (
     <form onSubmit={handleSave} className="p-2 w-full flex flex-col gap-4 max-w-[100%]">
+
       <div className="flex bg-white rounded-md p-2 justify-between items-center">
         <button
           type="submit"
@@ -109,7 +116,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
           <ProductTitleDescription product={product} onChange={handleInputChange} />
           <MediaManager
             productSlug={productSlug!}
-            images={product.images || []}
+            imageIds={product.images || []}
             onImagesUpdate={(updatedImages) => handleInputChange({ images: updatedImages })}
           />
           <ProductVariants productSlug={productSlug!} variants={product.variants || {}} />

@@ -1,38 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from 'firebase/storage';
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
-import { getFirestore, doc, setDoc, updateDoc } from 'firebase/firestore';
-
-
+import MediaSelectorPopup from './MediaSelectorPopup';
 
 interface ImageItem {
-  id: string;
+  id: string; // ID of the media document in Firestore
   alt: string; // Alt text for the image
   url: string; // URL of the image
 }
 
 interface MediaManagerProps {
-  productSlug: string; // Now included in the props interface
-  images: ImageItem[];
-  onImagesUpdate: (updatedImages: ImageItem[]) => void;
+  productSlug: string; // Product slug for the Firestore document
+  imageIds: string[]; // Array of image IDs from the product document
+  onImagesUpdate: (updatedImageIds: string[]) => void; // Callback for parent
 }
 
+
 const MediaManager: React.FC<MediaManagerProps> = ({
-  images,
-  onImagesUpdate,
   productSlug,
+  imageIds,
+  onImagesUpdate,
 }) => {
-  const [localImages, setLocalImages] = useState<ImageItem[]>(images || []);
+  const [localImages, setLocalImages] = useState<ImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [dragging, setDragging] = useState<number | null>(null); // Dragging state
-  const [isDragOverUpload, setIsDragOverUpload] = useState(false); // Drag-over state for upload zone
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [isDragOverUpload, setIsDragOverUpload] = useState(false);
+
+  // Fetch full image data (url, alt) from media collection
+  useEffect(() => {
+    const fetchImages = async () => {
+      const db = getFirestore();
+      const imagesData: ImageItem[] = await Promise.all(
+        imageIds.map(async (id) => {
+          const mediaDocRef = doc(db, 'media', id); // Fetch media details by ID
+          const mediaDoc = await getDoc(mediaDocRef);
+          if (mediaDoc.exists()) {
+            return mediaDoc.data() as ImageItem;
+          }
+          return { id, alt: 'Image not found', url: '' }; // Fallback for missing data
+        })
+      );
+      setLocalImages(imagesData); // Update local state with full media details
+    };
+  
+    fetchImages();
+  }, [imageIds]);
+  
 
   const convertToWebP = async (file: File): Promise<File> => {
     const bitmap = await createImageBitmap(file);
@@ -46,7 +68,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
     }
 
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, 'image/webp', 0.8) // Convert to WebP with 80% quality
+      canvas.toBlob(resolve, 'image/webp', 0.8)
     );
 
     if (!blob) {
@@ -60,78 +82,82 @@ const MediaManager: React.FC<MediaManagerProps> = ({
 
   const uploadMedia = async (file: File): Promise<ImageItem> => {
     const storage = getStorage();
-  
-    const webpFile = await convertToWebP(file); // Convert to .webp
-    const mediaId = `media_${Date.now()}`; // Generate unique ID
-    const storageRef = ref(storage, `media/${mediaId}`); // Path in Firebase Storage
-  
-    await uploadBytes(storageRef, webpFile); // Upload .webp file
-    const url = await getDownloadURL(storageRef); // Get public URL
-  
-    // Update Firestore with the media entry
+
+    const webpFile = await convertToWebP(file);
+    const mediaId = `media_${Date.now()}`;
+    const storageRef = ref(storage, `media/${mediaId}`);
+
+    await uploadBytes(storageRef, webpFile);
+    const url = await getDownloadURL(storageRef);
+
     const db = getFirestore();
     const mediaDocRef = doc(db, 'media', mediaId);
-  
-    await setDoc(mediaDocRef, {
+
+    const mediaItem: ImageItem = {
       id: mediaId,
       alt: file.name.split('.')[0],
       url,
+    };
+
+    await setDoc(mediaDocRef, {
+      ...mediaItem,
       type: 'image',
       created_at: new Date().toISOString(),
     });
-  
-    return { id: mediaId, alt: file.name.split('.')[0], url };
+
+    return mediaItem;
   };
-  
+
   const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
-  
+
     setUploading(true);
     try {
       const uploadedImages = await Promise.all(
         Array.from(files).map((file) => uploadMedia(file))
       );
-  
+
       const updatedImages = [...localImages, ...uploadedImages];
       setLocalImages(updatedImages);
-  
-      // Update Firestore product with the new image order
+
+      const updatedImageIds = updatedImages.map((image) => image.id);
+
       const db = getFirestore();
       const productDoc = doc(db, 'products', productSlug);
-  
+
       await updateDoc(productDoc, {
-        images: updatedImages.map((image) => image.id),
+        images: updatedImageIds,
       });
-  
-      onImagesUpdate(updatedImages); // Ensure parent component is updated
+
+      onImagesUpdate(updatedImageIds);
     } catch (error) {
       console.error('Error uploading media:', error);
     } finally {
       setUploading(false);
     }
   };
-  
+
   const handleDragOverImage = (index: number) => {
     if (dragging === null || dragging === index) return;
-  
+
     const reorderedImages = [...localImages];
     const [draggedItem] = reorderedImages.splice(dragging, 1);
     reorderedImages.splice(index, 0, draggedItem);
-  
+
     setLocalImages(reorderedImages);
-  
-    // Update Firestore with the reordered images
+
+    const updatedImageIds = reorderedImages.map((image) => image.id);
+
     const db = getFirestore();
     const productDoc = doc(db, 'products', productSlug);
-  
+
     updateDoc(productDoc, {
-      images: reorderedImages.map((image) => image.id),
+      images: updatedImageIds,
     });
-  
-    onImagesUpdate(reorderedImages); // Ensure parent component is updated
+
+    onImagesUpdate(updatedImageIds);
     setDragging(index);
   };
-  
 
   const handleDragStart = (index: number) => {
     setDragging(index);
@@ -140,22 +166,22 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   const handleDeleteImage = async (imageId: string) => {
     const updatedImages = localImages.filter((image) => image.id !== imageId);
     setLocalImages(updatedImages);
-  
-    // Update Firestore product with the new image order
+
+    const updatedImageIds = updatedImages.map((image) => image.id);
+
     const db = getFirestore();
     const productDoc = doc(db, 'products', productSlug);
-  
+
     await updateDoc(productDoc, {
-      images: updatedImages.map((image) => image.id),
+      images: updatedImageIds,
     });
-  
-    onImagesUpdate(updatedImages); // Notify the parent about the updated images
+
+    onImagesUpdate(updatedImageIds);
   };
 
-  
   const handleDragOverUpload = (event: React.DragEvent) => {
     event.preventDefault();
-    setIsDragOverUpload(true); // Indicate the user is dragging over the upload zone
+    setIsDragOverUpload(true);
   };
 
   const handleDropUpload = (event: React.DragEvent) => {
@@ -176,22 +202,57 @@ const MediaManager: React.FC<MediaManagerProps> = ({
     setDragging(null);
   };
 
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handlePopupClose = () => {
+    setShowPopup(false);
+  };
+
+  const handleMediaSelect = (selectedMedia: ImageItem[]) => {
+    // Sync localImages with selectedMedia
+    const updatedImages = selectedMedia.map((media) => {
+      const existingImage = localImages.find((img) => img.id === media.id);
+      return existingImage || media; // Keep existing image or add new media
+    });
+  
+    setLocalImages(updatedImages); // Update local state
+  
+    const updatedImageIds = updatedImages.map((image) => image.id);
+  
+    const db = getFirestore();
+    const productDoc = doc(db, 'products', productSlug);
+  
+    updateDoc(productDoc, {
+      images: updatedImageIds, // Update Firestore with synchronized IDs
+    });
+  
+    onImagesUpdate(updatedImageIds); // Notify parent with updated IDs
+    setShowPopup(false); // Close the popup
+  };
+  
+  
+
   return (
     <div className="p-4 bg-white rounded-md">
+      {showPopup && (
+        <MediaSelectorPopup
+          onClose={handlePopupClose}
+          onMediaSelect={handleMediaSelect}
+          selectedIds={imageIds} // Pass current image IDs
+        />
+      )}
+
       <h3 className="text-lg font-sm text-gray-700">Media:</h3>
       {uploading && <p className="mt-4 text-blue-500">Uploading...</p>}
 
       <div className="grid grid-cols-5 gap-4 mt-4">
         {localImages.map((item, index) => (
           <div
-            key={item.id}
-            className={`relative ${
-              index === 0
-                ? 'col-span-2 row-span-2' // First image spans 2 columns and 2 rows
-                : ''
-            } rounded-md overflow-hidden ${
-              dragging === index ? 'border-2 border-blue-500' : ''
-            }`}
+            key={`${item.id}-${index}`}
+            className={`relative ${index === 0 ? 'col-span-2 row-span-2' : ''
+              } rounded-md overflow-hidden ${dragging === index ? 'border-2 border-blue-500' : ''
+              }`}
             draggable
             onDragStart={() => handleDragStart(index)}
             onDragOver={() => handleDragOverImage(index)}
@@ -203,29 +264,32 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                 alt={item.alt}
                 className="w-full h-full object-cover"
               />
-                    <button
-        onClick={() => handleDeleteImage(item.id)}
-        className="absolute top-2 right-2 bg-white rounded-sm text-white rounded-sm w-6 h-6 flex items-center justify-center shadow-sm hover:shadow-md transition-all"
-        title="Delete Image"
-      >
-        <Image
-          src="/icons/trash full small.svg"
-          alt="Delete Icon"
-          width={16}
-          height={16}
-        />
-      </button>
+              <button
+                onClick={() => handleDeleteImage(item.id)}
+                className="absolute top-2 right-2 bg-white rounded-sm text-white rounded-sm w-6 h-6 flex items-center justify-center shadow-sm hover:shadow-md transition-all"
+                title="Delete Image"
+              >
+                <Image
+                  src="/icons/trash full small.svg"
+                  alt="Delete Icon"
+                  width={16}
+                  height={16}
+                />
+              </button>
             </div>
           </div>
         ))}
         <label
           htmlFor="file-upload"
-          className={`aspect-square w-full h-auto flex items-center justify-center gap-2 flex-col text-sm border-dashed border-2 rounded-md p-4 cursor-pointer ${
-            isDragOverUpload ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
-          }`}
+          className={`aspect-square w-full h-auto flex items-center justify-center gap-2 flex-col text-sm border-dashed border-2 rounded-md p-4 cursor-pointer ${isDragOverUpload ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
+            }`}
           onDragOver={handleDragOverUpload}
           onDragLeave={handleDragLeaveUpload}
           onDrop={handleDropUpload}
+          onClick={(e) => {
+            e.preventDefault(); // Prevent triggering the hidden file input
+            setShowPopup(true); // Open the popup
+          }}
         >
           <input
             id="file-upload"
@@ -235,13 +299,17 @@ const MediaManager: React.FC<MediaManagerProps> = ({
             onChange={(e) => handleFileUpload(e.target.files)}
             className="hidden"
           />
-          <p className="text-center text-gray-500">Add Image</p>
-          <Image
-            src="/icons/file_add.svg"
-            alt="Add Icon"
-            width={19}
-            height={19}
-          />
+          <div className="bg-blue-50 p-2 rounded-full">
+            <Image
+              src="/icons/big_blue_add_plus.svg"
+              alt="Delete Icon"
+              width={24}
+              height={24}
+            />
+
+          </div>
+          <p className='text-blue-500'>Add Media</p>
+
         </label>
       </div>
     </div>

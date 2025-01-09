@@ -28,7 +28,7 @@ export interface MediaItem {
     title: string;
     description: string;
     published: boolean;
-    images: MediaItem[];
+    images: string[];
     tags: string[];
     type: string;
     vendor: string;

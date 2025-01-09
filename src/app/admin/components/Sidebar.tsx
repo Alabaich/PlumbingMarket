@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
     <div className="admin-sidebar w-64 h-full flex flex-col justify-between pb-8 min-w-[256px]">
       <ul className="p-4">
         <li className="mb-2">
-          <CustomLinkWrapper href="/admin/dashboard" className="text-blue-500">
+          <CustomLinkWrapper href="/admin/dashboard" className="w-full text-left p-2 rounded-full flex justify-between items-center transition-all ">
             <div className="flex gap-2">
               <Image
                 src={getIconPath('home')}
@@ -63,9 +63,9 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'orders' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/orders" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/orders') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/orders" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/orders') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Orders
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -95,19 +95,19 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'products' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/products" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/products" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Products
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
               <li>
-                <CustomLink href="/admin/products/collections" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products/collections') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/products/collections" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/products/collections') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Collections
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
               <li>
-                <CustomLink href="/admin/inventory" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/inventory') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/inventory" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/inventory') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Inventory
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -137,9 +137,9 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'customers' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/customers" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/customers') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/customers" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/customers') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Customers
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -169,9 +169,9 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'content' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/content" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/content') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/content" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/content') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Content
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -201,9 +201,9 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'analytics' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/analytics" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/analytics') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/analytics" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/analytics') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Analytics
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -233,9 +233,9 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'marketing' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/marketing" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/marketing') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/marketing" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/marketing') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Marketing
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -265,9 +265,9 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'discounts' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/discounts" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/discounts') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/discounts" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/discounts') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Discounts
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
@@ -297,16 +297,16 @@ const Sidebar: React.FC = () => {
           {openDropdown === 'online-store' && (
             <ul className="ml-2 p-2 pl-2 pr-0 border-l-[1px] border-gray-300">
               <li>
-                <CustomLink href="/admin/online-store" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/online-store') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
+                <CustomLinkWrapper href="/admin/online-store" className={`block p-2 pl-4 rounded-full transition-all ${isActive('/admin/online-store') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}>
                   Online Store
-                </CustomLink>
+                </CustomLinkWrapper>
               </li>
             </ul>
           )}
         </li>
       </ul>
       <div className="p-4">
-        <CustomLink
+        <CustomLinkWrapper
           href="/admin/settings"
           className={`w-full text-left p-2 rounded-full flex justify-between items-center transition-all ${isActive('/admin/settings') ? 'bg-white/90 backdrop-blur-lg shadow-sm' : 'hover:bg-white/90 hover:backdrop-blur-lg hover:shadow-sm'}`}
         >
@@ -319,7 +319,7 @@ const Sidebar: React.FC = () => {
             />
             Settings
           </div>
-        </CustomLink>
+        </CustomLinkWrapper>
       </div>
     </div>
   );

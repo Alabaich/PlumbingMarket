@@ -26,6 +26,13 @@ const ProductTags: React.FC<ProductTagsProps> = ({ tags, onTagsUpdate }) => {
         onTagsUpdate(updatedTags);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent the default form submission behavior
+            handleAddTag();
+        }
+    };
+
     return (
         <div className="p-4 bg-white shadow-md rounded-md flex flex-col gap-4">
             <label className="text-sm font-medium text-gray-700">Tags</label>
@@ -35,30 +42,36 @@ const ProductTags: React.FC<ProductTagsProps> = ({ tags, onTagsUpdate }) => {
                     type="text"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     placeholder="Add a tag..."
                     className="p-2 border rounded-md flex-1 text-sm"
                 />
                 <button
                     onClick={handleAddTag}
-                    className=" text-sm px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    className="p-2 bg-blue-50 text-white rounded-sm hover:bg-blue-100"
                 >
-                    Add
+                    <Image
+                        src={getIconPath('add_plus')}
+                        alt="Settings Icon"
+                        width={19}
+                        height={19}
+                    />
                 </button>
             </div>
 
-            <div className="flex flex-wrap gap-2 mt-2 text-sm ">
+            <div className="flex flex-wrap gap-2 text-sm ">
                 {tags.map((tag, index) => (
                     <div
                         key={index}
-                        className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 px-3 py-1 rounded-full text-gray-400 hover:text-gray-600"
+                        className="cursor-pointer flex items-center gap-2 bg-gray-50 hover:bg-blue-50 px-3 py-1 rounded-full text-gray-400 hover:text-gray-600"
                     >
                         <span>{tag}</span>
                         <span onClick={() => handleDeleteTag(tag)} className='cursor-pointer'>
                             <Image
                                 src={getIconPath('cross-sm')}
                                 alt="Dashboard Icon"
-                                width={19}
-                                height={19}
+                                width={15}
+                                height={15}
                             /></span>
 
                     </div>
