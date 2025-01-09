@@ -14,15 +14,21 @@ export interface MediaItem {
   
   export interface Variant {
     id: string; // Identifier for the variant
-    name: string; // Variant name
     compare_at_price: number;
     cost: number;
     price: number;
     requires_shipping: boolean;
     taxable: boolean;
     weight: number;
-    option: Option;
+    option: Option; // Main option (e.g., size)
+    option2?: Option; // Optional second option (e.g., color)
+    option3?: Option; 
+    finish: string;
+    lead_time: string;
+    sqft: string;
   }
+
+  
   
   export interface Product {
     title: string;

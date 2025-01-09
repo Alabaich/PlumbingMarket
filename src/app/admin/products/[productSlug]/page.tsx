@@ -15,7 +15,8 @@ import ProductAdditionalDetails from './components/ProductAdditional';
 import ProductPricingDetails from './components/Pricing';
 import InventoryDetails from './components/InventoryDetails';
 import ShippingDetails from './components/ShippingDetails';
-import MediaSelectorPopup from './components/MediaSelectorPopup';
+import AddVariant from './components/AddVariants';
+import OneVariant from './components/OneVariant';
 
 const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ params }) => {
   const [productSlug, setProductSlug] = useState<string | null>(null);
@@ -119,11 +120,40 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             imageIds={product.images || []}
             onImagesUpdate={(updatedImages) => handleInputChange({ images: updatedImages })}
           />
-          {product.variants && Object.keys(product.variants).length > 0 && (
-            <ProductVariants productSlug={productSlug!} variants={product.variants} />
-          )}
+{product.variants && Object.keys(product.variants).length === 0 && (
+  <AddVariant
+  productSlug={productSlug!}
+  onVariantAdded={(newVariant) => {
+    const updatedVariants = { ...product.variants, [newVariant.id]: newVariant };
+    handleInputChange({ variants: updatedVariants });
+  }}
+/>
+)}
+
+{product.variants && Object.keys(product.variants).length === 1 && (
+  <OneVariant
+  productSlug={productSlug!}
+  variant={{
+    ...Object.values(product.variants)[0],
+    id: Object.keys(product.variants)[0], // Add id dynamically
+  }}
+  onVariantUpdate={(updatedVariant) => {
+    const updatedVariants = {
+      ...product.variants,
+      [updatedVariant.id]: updatedVariant,
+    };
+    handleInputChange({ variants: updatedVariants });
+  }}
+/>
+
+)} 
+
+{product.variants && Object.keys(product.variants).length > 1 && (
+  <ProductVariants productSlug={productSlug!} variants={product.variants} />
+)}
+
           <ProductDetails product={product} onChange={handleInputChange} />
-          {(!product.variants || Object.keys(product.variants).length === 0) && (
+          {(!product.variants || Object.keys(product.variants).length <= 1) && (
             <>
               <ProductAdditionalDetails product={product} onChange={handleInputChange} />
               <ProductPricingDetails
@@ -144,6 +174,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
               />
             </>
           )}
+
         </div>
         <div className="flex flex-col gap-4 w-[20%] ">
           <ProductStatus published={product.published} onChange={handleInputChange} />
