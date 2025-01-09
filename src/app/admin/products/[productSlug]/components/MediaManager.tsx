@@ -82,31 +82,39 @@ const MediaManager: React.FC<MediaManagerProps> = ({
 
   const uploadMedia = async (file: File): Promise<ImageItem> => {
     const storage = getStorage();
-
+  
+    // Extract original file name and sanitize it for Firebase Storage
+    const originalName = file.name.split('.').slice(0, -1).join('.').replace(/[^a-zA-Z0-9-_]/g, '_');
     const webpFile = await convertToWebP(file);
-    const mediaId = `media_${Date.now()}`;
-    const storageRef = ref(storage, `media/${mediaId}`);
-
+  
+    // Create a unique ID for the media item
+    const uniqueId = `media_${Date.now()}`;
+    const storageRef = ref(storage, `media/${originalName}_${uniqueId}.webp`); // Include original name in the file path
+  
+    // Upload the WebP file
     await uploadBytes(storageRef, webpFile);
     const url = await getDownloadURL(storageRef);
-
+  
     const db = getFirestore();
-    const mediaDocRef = doc(db, 'media', mediaId);
-
+    const mediaDocRef = doc(db, 'media', uniqueId); // Use unique ID for Firestore
+  
     const mediaItem: ImageItem = {
-      id: mediaId,
-      alt: file.name.split('.')[0],
-      url,
+      id: uniqueId, // Unique ID
+      alt: originalName, // Use original name as alt text
+      url, // URL pointing to the uploaded file
     };
-
+  
+    // Save metadata to Firestore
     await setDoc(mediaDocRef, {
       ...mediaItem,
       type: 'image',
+      original_name: file.name, // Store the original file name
       created_at: new Date().toISOString(),
     });
-
+  
     return mediaItem;
   };
+  
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;

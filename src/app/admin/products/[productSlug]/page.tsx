@@ -119,25 +119,31 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             imageIds={product.images || []}
             onImagesUpdate={(updatedImages) => handleInputChange({ images: updatedImages })}
           />
-          <ProductVariants productSlug={productSlug!} variants={product.variants || {}} />
+          {product.variants && Object.keys(product.variants).length > 0 && (
+            <ProductVariants productSlug={productSlug!} variants={product.variants} />
+          )}
           <ProductDetails product={product} onChange={handleInputChange} />
-          <ProductAdditionalDetails product={product} onChange={handleInputChange} />
-          <ProductPricingDetails
-            product={{
-              price: product.price,
-              cost: product.cost,
-              compare_at_price: product.compare_at_price,
-              taxable: product.taxable,
-            }}
-            onChange={handleInputChange}
-          />
-          <ShippingDetails
-            product={{
-              requires_shipping: product.requires_shipping,
-              weight: product.weight,
-            }}
-            onChange={handleInputChange}
-          />
+          {(!product.variants || Object.keys(product.variants).length === 0) && (
+            <>
+              <ProductAdditionalDetails product={product} onChange={handleInputChange} />
+              <ProductPricingDetails
+                product={{
+                  price: product.price,
+                  cost: product.cost,
+                  compare_at_price: product.compare_at_price,
+                  taxable: product.taxable,
+                }}
+                onChange={handleInputChange}
+              />
+              <ShippingDetails
+                product={{
+                  requires_shipping: product.requires_shipping,
+                  weight: product.weight,
+                }}
+                onChange={handleInputChange}
+              />
+            </>
+          )}
         </div>
         <div className="flex flex-col gap-4 w-[20%] ">
           <ProductStatus published={product.published} onChange={handleInputChange} />
