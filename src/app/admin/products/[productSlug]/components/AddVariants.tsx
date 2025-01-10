@@ -117,7 +117,7 @@ interface AddVariantProps {
   
 
   return (
-    <div className="p-4 bg-gray-100 rounded-md shadow-md">
+    <div className="p-4 bg-white rounded-md shadow-md">
       <h3 className="text-lg font-medium text-gray-700">Add New Variant</h3>
       <div className="grid grid-cols-2 gap-4 mt-4">
         <input

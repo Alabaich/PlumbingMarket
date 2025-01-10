@@ -1,22 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Product, Variant } from '../types';
 
-interface ProductAdditionalDetailsProps {
-  product: {
-    finish: string;
-    lead_time: string;
-    sqft: string;
-  };
-  onChange: (updatedFields: Partial<ProductAdditionalDetailsProps['product']>) => void;
+export interface ProductAdditionalDetailsProps<T extends Product | Variant> {
+  product: T;
+  onChange: (updatedFields: Partial<T>) => void;
+  variantId?: string; // Include optional variantId
 }
 
-const ProductAdditionalDetails: React.FC<ProductAdditionalDetailsProps> = ({ product, onChange }) => {
-  const [finish, setFinish] = useState(product.finish);
-  const [leadTime, setLeadTime] = useState(product.lead_time);
-  const [sqft, setSqft] = useState(product.sqft);
 
-  const handleInputChange = (field: string, value: string) => {
+
+const ProductAdditionalDetails = <T extends Product | Variant>({
+  product,
+  onChange,
+  variantId,
+}: ProductAdditionalDetailsProps<T>) => {
+  const [finish, setFinish] = useState<string | undefined>('');
+  const [leadTime, setLeadTime] = useState<string | undefined>('');
+  const [sqft, setSqft] = useState<string | undefined>('');
+
+  useEffect(() => {
+    if (variantId && 'variants' in product && product.variants?.[variantId]) {
+      const variant = product.variants[variantId];
+      setFinish(variant.finish || '');
+      setLeadTime(variant.lead_time || '');
+      setSqft(variant.sqft || '');
+    } else {
+      setFinish(product.finish || '');
+      setLeadTime(product.lead_time || '');
+      setSqft(product.sqft || '');
+    }
+  }, [product, variantId]);
+
+  const handleInputChange = (field: keyof T, value: string) => {
     switch (field) {
       case 'finish':
         setFinish(value);
@@ -30,8 +47,23 @@ const ProductAdditionalDetails: React.FC<ProductAdditionalDetailsProps> = ({ pro
       default:
         break;
     }
-    onChange({ [field]: value });
+  
+    if (variantId && 'variants' in product && product.variants?.[variantId]) {
+      const updatedVariants = {
+        ...product.variants,
+        [variantId]: {
+          ...(product.variants[variantId] || {}),
+          [field]: value,
+        },
+      };
+  
+      // Explicit cast through `unknown`
+      onChange({ variants: updatedVariants } as unknown as Partial<T>);
+    } else {
+      onChange({ [field]: value } as Partial<T>);
+    }
   };
+  
 
   return (
     <div className="p-4 rounded-md flex flex-col gap-4 bg-white">
@@ -65,5 +97,7 @@ const ProductAdditionalDetails: React.FC<ProductAdditionalDetailsProps> = ({ pro
     </div>
   );
 };
+
+
 
 export default ProductAdditionalDetails;

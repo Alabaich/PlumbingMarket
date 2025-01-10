@@ -1,26 +1,43 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Product, Variant } from '../types';
 
-interface ProductPricingProps {
-  product: {
-    price: number;
-    cost: number;
-    compare_at_price: number;
-    taxable: boolean; // For the "Charge tax on this product" checkbox
-  };
-  onChange: (updatedFields: Partial<ProductPricingProps['product']>) => void;
+export interface ProductPricingDetailsProps<T extends Product | Variant> {
+  product: T;
+  onChange: (updatedFields: Partial<T>) => void;
+  variantId?: string; // Optional variantId for handling variants
 }
 
-const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChange }) => {
-  const [price, setPrice] = useState(product.price);
-  const [cost, setCost] = useState(product.cost);
-  const [compareAtPrice, setCompareAtPrice] = useState(product.compare_at_price);
-  const [taxable, setTaxable] = useState(product.taxable); // Checkbox state
-  const [profit, setProfit] = useState(0);
-  const [margin, setMargin] = useState(0);
+const ProductPricingDetails = <T extends Product | Variant>({
+  product,
+  onChange,
+  variantId,
+}: ProductPricingDetailsProps<T>) => {
+  const [price, setPrice] = useState<number>(
+    variantId && 'variants' in product && product.variants?.[variantId]?.price
+      ? product.variants[variantId].price
+      : product.price
+  );
+  const [cost, setCost] = useState<number>(
+    variantId && 'variants' in product && product.variants?.[variantId]?.cost
+      ? product.variants[variantId].cost
+      : product.cost
+  );
+  const [compareAtPrice, setCompareAtPrice] = useState<number>(
+    variantId && 'variants' in product && product.variants?.[variantId]?.compare_at_price
+      ? product.variants[variantId].compare_at_price
+      : product.compare_at_price
+  );
+  const [taxable, setTaxable] = useState<boolean>(
+    variantId && 'variants' in product && product.variants?.[variantId]?.taxable
+      ? product.variants[variantId].taxable
+      : product.taxable
+  );
+  const [profit, setProfit] = useState<number>(0);
+  const [margin, setMargin] = useState<number>(0);
 
-  // Calculate profit and margin whenever price or cost changes
+  // Calculate profit and margin
   useEffect(() => {
     const calculatedProfit = price - cost;
     const calculatedMargin = price > 0 ? (calculatedProfit / price) * 100 : 0;
@@ -28,36 +45,47 @@ const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChang
     setMargin(calculatedMargin);
   }, [price, cost]);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    if (field === 'taxable') {
-      setTaxable(value as boolean);
-      onChange({ taxable: value as boolean });
-      return;
-    }
+  const handleInputChange = (field: keyof T, value: string | boolean) => {
+    const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
 
-    const numericValue = parseFloat(value as string) || 0; // Convert string to number
     switch (field) {
       case 'price':
-        setPrice(numericValue);
+        setPrice(numericValue as number);
         break;
       case 'cost':
-        setCost(numericValue);
+        setCost(numericValue as number);
         break;
       case 'compare_at_price':
-        setCompareAtPrice(numericValue);
+        setCompareAtPrice(numericValue as number);
+        break;
+      case 'taxable':
+        setTaxable(numericValue as boolean);
         break;
       default:
         break;
     }
 
-    onChange({ [field]: numericValue });
+    if (variantId && 'variants' in product && product.variants?.[variantId]) {
+      const updatedVariants = {
+        ...product.variants,
+        [variantId]: {
+          ...(product.variants[variantId] || {}),
+          [field]: numericValue,
+        },
+      };
+
+      onChange({
+        variants: updatedVariants,
+      } as unknown as Partial<T>); // Fix for TypeScript
+    } else {
+      onChange({ [field]: numericValue } as Partial<T>);
+    }
   };
 
   return (
     <div className="p-4 rounded-md flex flex-col gap-4 bg-white shadow-sm">
       <h3 className="text-lg font-medium text-gray-700">Pricing</h3>
       <div className="grid grid-cols-2 gap-4">
-        {/* Price */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Price</label>
           <div className="relative mt-1">
@@ -71,8 +99,6 @@ const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChang
             />
           </div>
         </div>
-
-        {/* Compare-at Price */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Compare-at Price</label>
           <div className="relative mt-1">
@@ -87,8 +113,6 @@ const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChang
           </div>
         </div>
       </div>
-
-      {/* Taxable Checkbox */}
       <div className="flex items-center gap-2 mt-4">
         <input
           type="checkbox"
@@ -98,10 +122,7 @@ const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChang
         />
         <label className="text-sm font-medium text-gray-700">Charge tax on this product</label>
       </div>
-
-      {/* Profit and Margin */}
       <div className="grid grid-cols-3 gap-4 mt-4">
-        {/* Cost */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Cost per item</label>
           <div className="relative mt-1">
@@ -115,8 +136,6 @@ const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChang
             />
           </div>
         </div>
-
-        {/* Profit */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Profit</label>
           <div className="relative mt-1">
@@ -129,8 +148,6 @@ const ProductPricingDetails: React.FC<ProductPricingProps> = ({ product, onChang
             />
           </div>
         </div>
-
-        {/* Margin */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Margin</label>
           <div className="relative mt-1">

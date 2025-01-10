@@ -17,6 +17,10 @@ import InventoryDetails from './components/InventoryDetails';
 import ShippingDetails from './components/ShippingDetails';
 import AddVariant from './components/AddVariants';
 import OneVariant from './components/OneVariant';
+import { ProductAdditionalDetailsProps } from './components/ProductAdditional';
+
+
+
 
 const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ params }) => {
   const [productSlug, setProductSlug] = useState<string | null>(null);
@@ -120,51 +124,62 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             imageIds={product.images || []}
             onImagesUpdate={(updatedImages) => handleInputChange({ images: updatedImages })}
           />
-{product.variants && Object.keys(product.variants).length === 0 && (
-  <AddVariant
-  productSlug={productSlug!}
-  onVariantAdded={(newVariant) => {
-    const updatedVariants = { ...product.variants, [newVariant.id]: newVariant };
-    handleInputChange({ variants: updatedVariants });
-  }}
-/>
-)}
 
-{product.variants && Object.keys(product.variants).length === 1 && (
-  <OneVariant
-  productSlug={productSlug!}
-  variant={{
-    ...Object.values(product.variants)[0],
-    id: Object.keys(product.variants)[0], // Add id dynamically
-  }}
-  onVariantUpdate={(updatedVariant) => {
-    const updatedVariants = {
-      ...product.variants,
-      [updatedVariant.id]: updatedVariant,
-    };
-    handleInputChange({ variants: updatedVariants });
-  }}
-/>
+          {product.variants && Object.keys(product.variants).length === 0 && (
+            <AddVariant
+              productSlug={productSlug!}
+              onVariantAdded={(newVariant) => {
+                const updatedVariants = { ...product.variants, [newVariant.id]: newVariant };
+                handleInputChange({ variants: updatedVariants });
+              }}
+            />
+          )}
 
-)} 
+          {product.variants && Object.keys(product.variants).length === 1 && (
+            <OneVariant
+              productSlug={productSlug!}
+              variant={{
+                ...Object.values(product.variants)[0], // Extract the single variant
+                id: Object.keys(product.variants)[0], // Add the id dynamically
+              }}
+              onVariantUpdate={(updatedVariant) => {
+                const updatedVariants = {
+                  ...product.variants,
+                  [updatedVariant.id]: updatedVariant,
+                };
+                handleInputChange({ variants: updatedVariants });
+              }}
+            />
+          )}
 
-{product.variants && Object.keys(product.variants).length > 1 && (
-  <ProductVariants productSlug={productSlug!} variants={product.variants} />
-)}
+          {product.variants && Object.keys(product.variants).length > 1 && (
+            <ProductVariants
+              productSlug={productSlug!}
+              variants={product.variants}
+            />
+          )}
+
+
 
           <ProductDetails product={product} onChange={handleInputChange} />
           {(!product.variants || Object.keys(product.variants).length <= 1) && (
             <>
-              <ProductAdditionalDetails product={product} onChange={handleInputChange} />
-              <ProductPricingDetails
-                product={{
-                  price: product.price,
-                  cost: product.cost,
-                  compare_at_price: product.compare_at_price,
-                  taxable: product.taxable,
-                }}
-                onChange={handleInputChange}
-              />
+<ProductAdditionalDetails
+  product={product}
+  onChange={(updatedFields) => handleInputChange(updatedFields)}
+  variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
+/>
+
+
+
+
+<ProductPricingDetails
+  product={product}
+  onChange={(updatedFields) => handleInputChange(updatedFields)}
+  variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
+/>
+
+
               <ShippingDetails
                 product={{
                   requires_shipping: product.requires_shipping,

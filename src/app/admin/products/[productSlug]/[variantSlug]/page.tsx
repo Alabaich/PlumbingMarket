@@ -130,15 +130,11 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
         onChange={(updatedFields) => handleInputChange(updatedFields)}
       />
 
-      <ProductPricingDetails
-        product={{
-          price: variant.price,
-          cost: variant.cost,
-          compare_at_price: variant.compare_at_price,
-          taxable: variant.taxable,
-        }}
-        onChange={(updatedFields) => handleInputChange(updatedFields)}
-      />
+<ProductPricingDetails
+  product={variant}
+  onChange={(updatedFields) => handleInputChange(updatedFields)}
+/>
+
 
       <ShippingDetails
         product={{
