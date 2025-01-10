@@ -13,6 +13,7 @@ export interface MediaItem {
   
   
   export interface Variant {
+    assigned_image: string; // ID of the assigned image
     id: string; // Identifier for the variant
     compare_at_price: number;
     cost: number;
@@ -26,6 +27,7 @@ export interface MediaItem {
     finish: string;
     lead_time: string;
     sqft: string;
+    barcode: string;
   }
 
   

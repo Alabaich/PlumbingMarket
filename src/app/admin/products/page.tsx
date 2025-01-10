@@ -5,6 +5,9 @@ import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firesto
 import DataTable from '../components/DataTable';
 import Image from 'next/image';
 import Link from 'next/link';
+import PlaceholderImage from '../components/PlaceholderImage';
+
+
 
 interface MediaItem {
   id: string;
@@ -25,11 +28,29 @@ interface Product {
 }
 
 const productColumns = [
-  { label: 'Image', accessor: (row: Product) => <img src={row.img} alt={row.product} className="h-16 w-16 object-cover rounded-md" /> },
-  { label: 'Product', accessor: (row: Product) => <Link href={`/admin/products/${row.slug}`} className="text-blue-500 underline hover:text-blue-700">{row.product}</Link> },
+  {
+    label: 'Image',
+    accessor: (row: Product) => (
+      <PlaceholderImage
+      size="small" 
+        src={row.img} // Use the resolved image URL or show the placeholder
+        alt={row.product}
+        className="h-16 w-16 object-cover rounded-md"
+      />
+    ),
+  },
+  {
+    label: 'Product',
+    accessor: (row: Product) => (
+      <Link href={`/admin/products/${row.slug}`} className="text-blue-500 underline hover:text-blue-700">
+        {row.product}
+      </Link>
+    ),
+  },
   { label: 'SKU', accessor: 'sku' },
   { label: 'Vendor', accessor: 'vendor' },
 ];
+
 
 const getIconPath = (name: string) => `/icons/${name.toLowerCase()}.svg`;
 

@@ -1,29 +1,53 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Product, Variant } from '../types';
 
-interface ShippingDetailsProps {
-  product: {
-    requires_shipping: boolean;
-    weight: number;
-  };
-  onChange: (updatedFields: Partial<ShippingDetailsProps['product']>) => void;
+export interface ShippingDetailsProps<T extends Product | Variant> {
+  product: T;
+  onChange: (updatedFields: Partial<T>) => void;
+  variantId?: string; // Optional variantId for handling variants
 }
 
-const ShippingDetails: React.FC<ShippingDetailsProps> = ({ product, onChange }) => {
-  const [requiresShipping, setRequiresShipping] = useState(product.requires_shipping);
-  const [weight, setWeight] = useState(product.weight);
+const ShippingDetails = <T extends Product | Variant>({
+  product,
+  onChange,
+  variantId,
+}: ShippingDetailsProps<T>) => {
+  const [requiresShipping, setRequiresShipping] = useState<boolean>(
+    variantId && 'variants' in product && product.variants?.[variantId]?.requires_shipping
+      ? product.variants[variantId].requires_shipping
+      : product.requires_shipping
+  );
+  const [weight, setWeight] = useState<number>(
+    variantId && 'variants' in product && product.variants?.[variantId]?.weight
+      ? product.variants[variantId].weight
+      : product.weight
+  );
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: keyof T, value: string | boolean) => {
     if (field === 'requires_shipping') {
       setRequiresShipping(value as boolean);
-      onChange({ requires_shipping: value as boolean });
-      return;
+    } else {
+      const numericValue = parseFloat(value as string) || 0;
+      setWeight(numericValue);
     }
 
-    const numericValue = parseFloat(value as string) || 0; // Convert string to number
-    setWeight(numericValue);
-    onChange({ weight: numericValue });
+    if (variantId && 'variants' in product && product.variants?.[variantId]) {
+      const updatedVariants = {
+        ...product.variants,
+        [variantId]: {
+          ...(product.variants[variantId] || {}),
+          [field]: field === 'requires_shipping' ? value : parseFloat(value as string),
+        },
+      };
+
+      onChange({
+        variants: updatedVariants,
+      } as unknown as Partial<T>);
+    } else {
+      onChange({ [field]: field === 'requires_shipping' ? value : parseFloat(value as string) } as Partial<T>);
+    }
   };
 
   return (
@@ -38,18 +62,14 @@ const ShippingDetails: React.FC<ShippingDetailsProps> = ({ product, onChange }) 
           onChange={(e) => handleInputChange('requires_shipping', e.target.checked)}
           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
         />
-        <label className="text-sm font-medium text-gray-700">
-          This is a physical product
-        </label>
+        <label className="text-sm font-medium text-gray-700">This is a physical product</label>
       </div>
 
       {/* Weight Input */}
       <div>
         <label className="block text-sm font-medium text-gray-700">Weight</label>
         <div className="relative mt-1">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
-            lb
-          </span>
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">lb</span>
           <input
             type="number"
             value={weight}

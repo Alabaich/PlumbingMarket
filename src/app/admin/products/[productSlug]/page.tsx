@@ -127,15 +127,23 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
           {product.variants && Object.keys(product.variants).length === 0 && (
             <AddVariant
-              productSlug={productSlug!}
+              productSlug={productSlug!} // Ensures `productSlug` is treated as non-null
+              productData={product}
               onVariantAdded={(newVariant) => {
-                const updatedVariants = { ...product.variants, [newVariant.id]: newVariant };
+                const updatedVariants = {
+                  ...product.variants,
+                  [newVariant.id]: newVariant,
+                };
                 handleInputChange({ variants: updatedVariants });
               }}
             />
+
+
+
           )}
 
           {product.variants && Object.keys(product.variants).length === 1 && (
+
             <OneVariant
               productSlug={productSlug!}
               variant={{
@@ -143,13 +151,44 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
                 id: Object.keys(product.variants)[0], // Add the id dynamically
               }}
               onVariantUpdate={(updatedVariant) => {
+                // Update the single variant in the product
                 const updatedVariants = {
                   ...product.variants,
                   [updatedVariant.id]: updatedVariant,
                 };
                 handleInputChange({ variants: updatedVariants });
               }}
+              onAddVariant={() => {
+                // Add another variant logic
+                const newVariantId = `variant_${Date.now()}`;
+                const newVariant = {
+                  id: newVariantId,
+                  price: 0, // Default price
+                  compare_at_price: 0, // Default compare price
+                  barcode: '',
+                  cost: 0,
+                  requires_shipping: false,
+                  taxable: false,
+                  weight: 0,
+                  assigned_image: '', // Default empty image
+                  finish: '', // Default empty finish
+                  lead_time: '', // Default lead time
+                  sqft: '', // Default sqft
+                  option: { name: 'Size', value: '' }, // Default option
+                };
+
+                const updatedVariants = {
+                  ...product.variants,
+                  [newVariantId]: newVariant,
+                };
+
+                // Update product with the new variant
+                handleInputChange({ variants: updatedVariants });
+              }}
             />
+
+
+
           )}
 
           {product.variants && Object.keys(product.variants).length > 1 && (
@@ -164,29 +203,28 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
           <ProductDetails product={product} onChange={handleInputChange} />
           {(!product.variants || Object.keys(product.variants).length <= 1) && (
             <>
-<ProductAdditionalDetails
-  product={product}
-  onChange={(updatedFields) => handleInputChange(updatedFields)}
-  variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
-/>
+              <ProductAdditionalDetails
+                product={product}
+                onChange={(updatedFields) => handleInputChange(updatedFields)}
+                variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
+              />
 
 
 
 
-<ProductPricingDetails
-  product={product}
-  onChange={(updatedFields) => handleInputChange(updatedFields)}
-  variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
-/>
+              <ProductPricingDetails
+                product={product}
+                onChange={(updatedFields) => handleInputChange(updatedFields)}
+                variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
+              />
 
 
               <ShippingDetails
-                product={{
-                  requires_shipping: product.requires_shipping,
-                  weight: product.weight,
-                }}
-                onChange={handleInputChange}
+                product={product}
+                onChange={(updatedFields) => handleInputChange(updatedFields)}
+                variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
               />
+
             </>
           )}
 
@@ -201,13 +239,16 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             product={{ type: product.type, vendor: product.vendor }}
             onChange={handleInputChange}
           />
-          <InventoryDetails
-            product={{
-              sku: product.sku,
-              barcode: product.barcode,
-            }}
-            onChange={handleInputChange}
-          />
+          {(!product.variants || Object.keys(product.variants).length <= 1) && (
+            <InventoryDetails
+              product={product}
+              onChange={(updatedFields) => handleInputChange(updatedFields)}
+              variantId={Object.keys(product.variants || {})[0]} // Pass the first variant's ID if it exists
+            />
+
+          )}
+
+
         </div>
       </div>
     </form>

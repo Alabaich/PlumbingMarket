@@ -1,27 +1,61 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Product, Variant } from '../types';
 
-interface InventoryDetailsProps {
-  product: {
-    sku: string;
-    barcode: string;
-  };
-  onChange: (updatedFields: Partial<InventoryDetailsProps['product']>) => void;
+export interface InventoryDetailsProps<T extends Product | Variant> {
+  product: T;
+  onChange: (updatedFields: Partial<T>) => void;
+  variantId?: string; // Optional variantId for handling variants
+  onRenameVariant?: (oldSku: string, newSku: string) => void; // Callback for renaming SKU
 }
 
-const InventoryDetails: React.FC<InventoryDetailsProps> = ({ product, onChange }) => {
-  const [sku, setSku] = useState(product.sku);
-  const [barcode, setBarcode] = useState(product.barcode);
+const InventoryDetails = <T extends Product | Variant>({
+  product,
+  onChange,
+  variantId,
+  onRenameVariant,
+}: InventoryDetailsProps<T>) => {
+  const [sku, setSku] = useState<string>(variantId || '');
+  const [barcode, setBarcode] = useState<string>('');
 
-  const handleInputChange = (field: string, value: string) => {
+  useEffect(() => {
+    // For multiple variants, set sku from variantId
+    if (variantId && 'variants' in product) {
+      const variant = (product as Product).variants?.[variantId];
+      setSku(variantId); // Use the variantId directly as the SKU
+      setBarcode(variant?.barcode || ''); // Set barcode from variant
+    } else {
+      // For single variant or no variants, fallback to product-level data
+      setSku((product as Product).sku || '');
+      setBarcode((product as Product).barcode || '');
+    }
+  }, [product, variantId]);
+
+  const handleInputChange = (field: 'sku' | 'barcode', value: string) => {
     if (field === 'sku') {
+      if (variantId && onRenameVariant) {
+        onRenameVariant(sku, value); // Trigger the renaming callback
+      }
       setSku(value);
     } else if (field === 'barcode') {
       setBarcode(value);
-    }
+      if (variantId && 'variants' in product) {
+        const updatedVariants = {
+          ...((product as Product).variants || {}),
+          [variantId]: {
+            ...(product as Product).variants[variantId],
+            barcode: value,
+          },
+        };
 
-    onChange({ [field]: value });
+        onChange({
+          variants: updatedVariants,
+        } as unknown as Partial<T>);
+      } else {
+        onChange({ barcode: value } as Partial<T>);
+      }
+    }
   };
 
   return (
