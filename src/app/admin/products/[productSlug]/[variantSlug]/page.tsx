@@ -9,6 +9,7 @@ import ShippingDetails from '../components/ShippingDetails';
 import InventoryDetails from '../components/InventoryDetails';
 import AssignVariantImage from '../components/AssignVariantImage';
 import VariantOptionsEditor from '../components/OptionsVariant';
+import ProductVariantNavigator from '../components/ProductVariantNavigator';
 import { Variant, MediaItem } from '../types';
 
 interface VariantPageProps {
@@ -139,6 +140,19 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
     return <div className="text-center mt-6">Variant not found</div>;
   }
 
+  const variantsList = Object.entries(productData.variants || {}).map(([id, variant]: any) => ({
+    id,
+    image: variant.assigned_image || null,
+    options: variant.option
+      ? {
+          [variant.option.name]: variant.option.value,
+          ...(variant.option2 ? { [variant.option2.name]: variant.option2.value } : {}),
+          ...(variant.option3 ? { [variant.option3.name]: variant.option3.value } : {}),
+        }
+      : {},
+    name: variant.name || '',
+  }));
+
   return (
     <form
       onSubmit={(e) => {
@@ -157,6 +171,15 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
           {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
+
+      <ProductVariantNavigator
+        productSlug={productSlug!}
+        productTitle={productData.title || 'Product'}
+        productImages={productData.images}
+        productStatus={productData.published ? 'Active' : 'Inactive'}
+        variants={variantsList}
+        currentVariantId={variantSlug!}
+      />
 
       <AssignVariantImage
         product={productData}
