@@ -145,10 +145,10 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
     image: variant.assigned_image || null,
     options: variant.option
       ? {
-          [variant.option.name]: variant.option.value,
-          ...(variant.option2 ? { [variant.option2.name]: variant.option2.value } : {}),
-          ...(variant.option3 ? { [variant.option3.name]: variant.option3.value } : {}),
-        }
+        [variant.option.name]: variant.option.value,
+        ...(variant.option2 ? { [variant.option2.name]: variant.option2.value } : {}),
+        ...(variant.option3 ? { [variant.option3.name]: variant.option3.value } : {}),
+      }
       : {},
     name: variant.name || '',
   }));
@@ -159,7 +159,7 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
         e.preventDefault();
         handleSave();
       }}
-      className="p-4 shadow-md rounded-md flex flex-col gap-4"
+      className="flex flex-col gap-4"
     >
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-medium text-gray-700">Edit Variant</h2>
@@ -172,72 +172,99 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
         </button>
       </div>
 
-      <ProductVariantNavigator
-        productSlug={productSlug!}
-        productTitle={productData.title || 'Product'}
-        productImages={productData.images}
-        productStatus={productData.published ? 'Active' : 'Inactive'}
-        variants={variantsList}
-        currentVariantId={variantSlug!}
-      />
+      <div className="flex gap-4 w-full">
+        <div className="flex flex-col gap-4 w-[30%]">
+          <ProductVariantNavigator
+            productSlug={productSlug!}
+            productTitle={productData.title || 'Product'}
+            productImages={productData.images}
+            productStatus={productData.published ? 'Active' : 'Inactive'}
+            variants={variantsList}
+            currentVariantId={variantSlug!}
+          />
+          <ShippingDetails
+            product={variant}
+            onChange={(updatedFields) => handleInputChange(updatedFields)}
+          />
+          <InventoryDetails
+            product={productData}
+            onChange={(updatedFields) => handleInputChange(updatedFields)}
+            variantId={variantSlug || undefined}
+          />
+        </div>
+        <div className="flex flex-col gap-4 w-full">
+          <AssignVariantImage
+            product={productData}
+            media={mediaItems}
+            variantId={variantSlug || ''}
+            onUpdate={(updatedVariant) => {
+              setVariant((prev) => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  ...updatedVariant,
+                  id: prev.id || variantSlug || '', // Ensure `id` is always a string
+                };
+              });
 
-      <AssignVariantImage
-        product={productData}
-        productSlug={productSlug!}
-        media={mediaItems}
-        variantId={variantSlug || ''}
-        onUpdate={(updatedVariant) => {
-          setProductData((prev: any) => ({
-            ...prev,
-            variants: {
-              ...prev.variants,
-              [variantSlug || '']: {
-                ...prev.variants[variantSlug || ''],
-                ...updatedVariant,
-              },
-            },
-          }));
-        }}
-      />
-
-      <VariantOptionsEditor
-        variant={variant}
-        onVariantUpdate={(updatedVariant) => {
-          setVariant(updatedVariant);
-          setProductData((prev: any) => ({
-            ...prev,
-            variants: {
-              ...prev.variants,
-              [variantSlug || '']: updatedVariant,
-            },
-          }));
-          setUnsavedChanges(true);
-        }}
-      />
-
-
-      <ProductPricingDetails
-        product={variant}
-        onChange={(updatedFields) => handleInputChange(updatedFields)}
-      />
-
-      <ShippingDetails
-        product={variant}
-        onChange={(updatedFields) => handleInputChange(updatedFields)}
-      />
+              setProductData((prev: any) => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  variants: {
+                    ...prev.variants,
+                    [variantSlug || '']: {
+                      ...prev.variants[variantSlug || ''],
+                      ...updatedVariant,
+                      id: prev.variants[variantSlug || ''].id || variantSlug || '', // Ensure `id` is always a string
+                    },
+                  },
+                };
+              });
+            }}
+          />
 
 
 
-      <InventoryDetails
-        product={productData}
-        onChange={(updatedFields) => handleInputChange(updatedFields)}
-        variantId={variantSlug || undefined}
-      />
+          <VariantOptionsEditor
+            variant={variant}
+            onVariantUpdate={(updatedVariant) => {
+              setVariant(updatedVariant);
+              setProductData((prev: any) => ({
+                ...prev,
+                variants: {
+                  ...prev.variants,
+                  [variantSlug || '']: updatedVariant,
+                },
+              }));
+              setUnsavedChanges(true);
+            }}
+          />
 
-      <ProductAdditionalDetails
-        product={variant}
-        onChange={(updatedFields) => handleInputChange(updatedFields)}
-      />
+
+          <ProductPricingDetails
+            product={variant}
+            onChange={(updatedFields) => handleInputChange(updatedFields)}
+          />
+
+          <ProductAdditionalDetails
+            product={variant}
+            onChange={(updatedFields) => handleInputChange(updatedFields)}
+          />
+        </div>
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     </form>

@@ -3,12 +3,15 @@
 import React, { useState } from 'react';
 import { getFirestore, doc, updateDoc } from 'firebase/firestore';
 import { Variant, Product } from '../types';
+import Image from 'next/image';
 
 interface AddVariantProps {
   productSlug: string;
   productData: Product; // Product object passed as a prop
   onVariantAdded: (variant: Variant) => void;
 }
+
+const getIconPath = (name: string) => `/icons/${name.toLowerCase()}.svg`;
 
 const AddVariant: React.FC<AddVariantProps> = ({ productSlug, productData, onVariantAdded }) => {
   const [variant, setVariant] = useState({
@@ -102,15 +105,15 @@ const AddVariant: React.FC<AddVariantProps> = ({ productSlug, productData, onVar
 
   return (
     <div className="p-4 bg-white rounded-md shadow-sm">
-      <h3 className="text-lg font-medium text-gray-700">Add New Variant</h3>
-      <div className="grid grid-cols-2 gap-4 mt-4">
+      <h3 className="text-lg font-sm text-gray-700">Add New Variant</h3>
+      <div className="flex gap-4 mt-4">
         <input
           type="text"
           name="optionName"
           value={variant.optionName}
           onChange={handleInputChange}
           placeholder="Option Name (e.g., Size)"
-          className="p-2 border rounded-md"
+          className="px-2 border rounded-md w-full text-sm"
           required
         />
         <input
@@ -119,17 +122,26 @@ const AddVariant: React.FC<AddVariantProps> = ({ productSlug, productData, onVar
           value={variant.optionValue}
           onChange={handleInputChange}
           placeholder="Option Value (e.g., Small)"
-          className="p-2 border rounded-md"
+          className="px-2 border rounded-md w-full text-sm"
           required
         />
+        <button
+          onClick={handleSaveVariant}
+          className="px-4 py-2 bg-blue-50 text-blue-500 rounded-sm hover:bg-blue-100 min-w-[175px] flex justify-center items-center gap-2"
+          disabled={saving}
+        >
+          {!saving && (
+            <Image
+              src={getIconPath('big_blue_add_plus')}
+              alt="Add Icon"
+              width={19}
+              height={19}
+            />
+          )}
+          {saving ? 'Saving...' : 'Add Variant'}
+        </button>
       </div>
-      <button
-        onClick={handleSaveVariant}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        disabled={saving}
-      >
-        {saving ? 'Saving...' : 'Save Variant'}
-      </button>
+
     </div>
   );
 };
