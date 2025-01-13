@@ -104,7 +104,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       console.error('Product data is missing.');
       return;
     }
-  
+
     if (window.confirm('Are you sure you want to delete this variant?')) {
       // Filter out the variant from the product data
       const updatedVariants = { ...product.variants };
@@ -159,20 +159,13 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
         setProduct(updatedProduct); // Update local state
         alert('Variant added successfully!');
         // Redirect to the new variant page
-        window.location.href = `/products/${productSlug}/${newVariant.id}`;
+        window.location.href = `/admin/products/${productSlug}/${newVariant.id}`;
       })
       .catch((err) => {
         console.error('Error adding variant:', err);
         alert('Failed to add variant.');
       });
   };
-
-
-
-
-
-
-
 
   if (loading) {
     return <div className="text-center mt-6">Loading...</div>;
@@ -337,3 +330,8 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 };
 
 export default ProductPage;
+
+
+
+// http://localhost:3000/admin/products/admin/products/kube-bath-bliss-18-x-59-bathroom-acrylic-veneer-gloss-white-linen-side-cabinet-w-3-large-storage-areas/pops
+// http://localhost:3000/admin/products/kube-bath-bliss-18-x-59-bathroom-acrylic-veneer-gloss-white-linen-side-cabinet-w-3-large-storage-areas/Popa

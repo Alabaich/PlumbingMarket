@@ -66,7 +66,7 @@ const ProductAdditionalDetails = <T extends Product | Variant>({
   
 
   return (
-    <div className="p-4 rounded-md flex flex-col gap-4 bg-white">
+    <div className="p-4 rounded-md flex flex-col gap-4 bg-white shadow-sm">
       <div>
         <label className="block text-sm font-medium text-gray-700">Finish</label>
         <input

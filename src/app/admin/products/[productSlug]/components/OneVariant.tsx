@@ -147,7 +147,7 @@ const OneVariant: React.FC<OneVariantProps> = ({
   
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-md border border-gray-200">
+    <div className="p-4 bg-white shadow-sm rounded-md border border-gray-200">
       <div className="flex widt-full justify-between items-center mb-2">
         <h3 className="text-sm font-medium text-gray-700">Variants:</h3>
         <div className="">

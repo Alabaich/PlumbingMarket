@@ -24,7 +24,7 @@ const ProductOrganization: React.FC<ProductOrganizationProps> = ({ product, onCh
   };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-md flex flex-col gap-4">
+    <div className="p-4 bg-white shadow-sm rounded-md flex flex-col gap-4">
       <div>
         <label className="block text-sm font-medium text-gray-700">Product Type</label>
         <input

@@ -21,7 +21,7 @@ const ProductStatus: React.FC<ProductStatusProps> = ({ published, onChange }) =>
   };
 
   return (
-    <div className="p-4 rounded-md bg-white flex flex-col gap-4">
+    <div className="p-4 rounded-md bg-white flex flex-col gap-4 shadow-sm">
       <label className="block text-sm font-medium text-gray-700">Status</label>
       <select
         value={status ? 'true' : 'false'} // Convert boolean to string for select

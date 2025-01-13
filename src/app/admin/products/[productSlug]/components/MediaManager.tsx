@@ -242,7 +242,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   
 
   return (
-    <div className="p-4 bg-white rounded-md">
+    <div className="p-4 bg-white rounded-md shadow-sm">
       {showPopup && (
         <MediaSelectorPopup
           onClose={handlePopupClose}

@@ -34,7 +34,7 @@ const ProductTags: React.FC<ProductTagsProps> = ({ tags, onTagsUpdate }) => {
     };
 
     return (
-        <div className="p-4 bg-white shadow-md rounded-md flex flex-col gap-4">
+        <div className="p-4 bg-white shadow-sm rounded-md flex flex-col gap-4">
             <label className="text-sm font-medium text-gray-700">Tags</label>
 
             <div className="flex gap-2">
