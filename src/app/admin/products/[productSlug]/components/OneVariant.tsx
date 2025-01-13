@@ -19,17 +19,16 @@ interface NewVariantPopupProps {
   onSave: (sku: string, options: { [key: string]: string }) => void; // Function with parameters
 }
 
-
-
 const OneVariant: React.FC<OneVariantProps> = ({
   productSlug,
   variant,
   onVariantUpdate,
   onAddVariant,
-  onDeleteVariant
+  onDeleteVariant,
 }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [variantDetails, setVariantDetails] = useState<Variant>(variant);
+  const [dragging, setDragging] = useState<'option' | 'option2' | 'option3' | null>(null);
 
   const handleOptionChange = (
     key: 'option' | 'option2' | 'option3',
@@ -67,35 +66,32 @@ const OneVariant: React.FC<OneVariantProps> = ({
 
     if (key === 'option') {
       if (updatedVariant.option2) {
-        // Shift option2 to option
         updatedVariant.option = { ...updatedVariant.option2 };
-        // Shift option3 to option2 if it exists
         if (updatedVariant.option3) {
           updatedVariant.option2 = { ...updatedVariant.option3 };
-          delete updatedVariant.option3; // Remove option3
+          delete updatedVariant.option3;
         } else {
-          delete updatedVariant.option2; // Remove option2 if no option3
+          delete updatedVariant.option2;
         }
       } else {
-        // If no option2 exists, confirm deletion of the entire variant
         if (
           window.confirm(
             'This is the last option. Are you sure you want to delete this variant?'
           )
         ) {
-          onDeleteVariant(variantDetails.id); // Trigger variant deletion
-          return; // Exit early as the entire variant is deleted
+          onDeleteVariant(variantDetails.id);
+          return;
         }
       }
     } else if (key === 'option2') {
       if (updatedVariant.option3) {
         updatedVariant.option2 = { ...updatedVariant.option3 };
-        delete updatedVariant.option3; // Remove option3
+        delete updatedVariant.option3;
       } else {
-        delete updatedVariant.option2; // Remove option2 entirely
+        delete updatedVariant.option2;
       }
     } else if (key === 'option3') {
-      delete updatedVariant.option3; // Simply remove option3
+      delete updatedVariant.option3;
     }
 
     setVariantDetails(updatedVariant); // Update local state
@@ -104,9 +100,9 @@ const OneVariant: React.FC<OneVariantProps> = ({
 
   const handleSaveNewVariant = (sku: string, options: { [key: string]: string }) => {
     setShowPopup(false);
-  
+
     const newVariant: Variant = {
-      id: sku, // Use SKU as the ID
+      id: sku,
       price: 0,
       compare_at_price: 0,
       barcode: '',
@@ -139,126 +135,94 @@ const OneVariant: React.FC<OneVariantProps> = ({
           }
         : {}),
     };
-  
-    onAddVariant(newVariant); // Pass the new variant to the parent component
+
+    onAddVariant(newVariant);
   };
-  
-  
-  
+
+  const handleDragStart = (key: 'option' | 'option2' | 'option3') => {
+    setDragging(key);
+  };
+
+  const handleDragOver = (target: 'option' | 'option2' | 'option3') => {
+    if (!dragging || dragging === target) return;
+
+    const updatedVariant = { ...variantDetails, [dragging]: variantDetails[target], [target]: variantDetails[dragging] };
+    setVariantDetails(updatedVariant); // Swap the options in state
+    onVariantUpdate(updatedVariant); // Notify parent of the updated state
+    setDragging(null); // Reset dragging state
+  };
 
   return (
     <div className="p-4 bg-white shadow-sm rounded-md border border-gray-200">
-      <div className="flex widt-full justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-2">
         <h3 className="text-sm font-medium text-gray-700">Variants:</h3>
-        <div className="">
-          <button
-            type="button"
-            onClick={() => setShowPopup(true)}
-            className="bg-blue-50 text-blue-600 text-sm px-4 py-2 rounded-md hover:bg-blue-100 transition"
-          >
-            + Add Another Variant
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowPopup(true)}
+          className="bg-blue-50 text-blue-600 text-sm px-4 py-2 rounded-md hover:bg-blue-100 transition"
+        >
+          + Add Another Variant
+        </button>
       </div>
 
       <div className="flex flex-col gap-2 border-[1px] border-gray-200 rounded-md p-2">
-        {/* Option 1 */}
-        <div className="flex justify-between items-left gap-2 px-2 border-b-[1px]">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Option 1 Name"
-              className="py-1 px-2 text-sm max-w-[75px]"
-              value={variantDetails.option.name}
-              onChange={(e) => handleOptionChange('option', 'name', e.target.value)} // Fixed handler
-            />
-            -
-            <input
-              type="text"
-              placeholder="Option 1 Value"
-              className="py-1 px-2 text-sm max-w-[75px]"
-              value={variantDetails.option.value}
-              onChange={(e) => handleOptionChange('option', 'value', e.target.value)} // Fixed handler
-            />
-          </div>
+        {['option', 'option2', 'option3'].map((key) => {
+          const optionKey = key as 'option' | 'option2' | 'option3';
+          const option = variantDetails[optionKey];
+          if (!option) return null;
 
-
-          <button
-            type="button"
-            onClick={() => handleRemoveOption('option')}
-            className="text-red-500 text-sm"
-            title="Remove Option 1"
-          >
-            ×
-          </button>
-
-        </div>
-
-        {/* Option 2 */}
-        {variantDetails.option2 && (
-          <div className="flex items-left gap-2 px-2 border-b-[1px]">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Option 2 Name"
-                className="py-1 px-2 text-sm max-w-[75px]"
-                value={variantDetails.option2.name}
-                onChange={(e) => handleOptionChange('option2', 'name', e.target.value)} // Fixed handler
-              />
-              -
-              <input
-                type="text"
-                placeholder="Option 2 Value"
-                className="py-1 px-2 text-sm max-w-[75px]"
-                value={variantDetails.option2.value}
-                onChange={(e) => handleOptionChange('option2', 'value', e.target.value)} // Fixed handler
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleRemoveOption('option2')}
-              className="text-red-500 text-sm"
-              title="Remove Option 2"
+          return (
+            <div
+              key={optionKey}
+              draggable
+              onDragStart={() => handleDragStart(optionKey)}
+              onDragOver={(e) => {
+                e.preventDefault(); // Allow drop
+                handleDragOver(optionKey);
+              }}
+              className={`flex justify-between items-center gap-2 px-2 border-b-[1px] ${
+                dragging === optionKey ? 'bg-blue-100' : ''
+              }`}
             >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Option 3 */}
-        {variantDetails.option3 && (
-          <div className="flex items-left gap-2 px-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Option 3 Name"
-                className="py-1 px-2 text-sm max-w-[75px]"
-                value={variantDetails.option3.name}
-                onChange={(e) => handleOptionChange('option3', 'name', e.target.value)} // Fixed handler
-              />
-              -
-              <input
-                type="text"
-                placeholder="Option 3 Value"
-                className="py-1 px-2 text-sm max-w-[75px]"
-                value={variantDetails.option3.value}
-                onChange={(e) => handleOptionChange('option3', 'value', e.target.value)} // Fixed handler
-              />
+              <div className="flex items-center gap-2">
+                <span
+                  className="cursor-grab"
+                  title="Drag to reorder"
+                  style={{
+                    display: 'inline-block',
+                    width: 20,
+                    height: 20,
+                    background: 'url(/icons/dragVertical.svg) center center no-repeat',
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder={`${key} Name`}
+                  className="py-1 px-2 text-sm max-w-[75px]"
+                  value={option.name}
+                  onChange={(e) => handleOptionChange(optionKey, 'name', e.target.value)}
+                />
+                -
+                <input
+                  type="text"
+                  placeholder={`${key} Value`}
+                  className="py-1 px-2 text-sm max-w-[75px]"
+                  value={option.value}
+                  onChange={(e) => handleOptionChange(optionKey, 'value', e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveOption(optionKey)}
+                className="text-red-500 text-sm"
+                title={`Remove ${key}`}
+              >
+                ×
+              </button>
             </div>
+          );
+        })}
 
-            <button
-              type="button"
-              onClick={() => handleRemoveOption('option3')}
-              className="text-red-500 text-sm"
-              title="Remove Option 3"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Add Another Option Button */}
         {(!variantDetails.option2 || !variantDetails.option3) && (
           <button
             type="button"
@@ -269,19 +233,17 @@ const OneVariant: React.FC<OneVariantProps> = ({
           </button>
         )}
 
-{showPopup && (
-  <NewVariantPopup
-    existingOptions={[
-      { name: variant.option.name, value: '' },
-      ...(variant.option2 ? [{ name: variant.option2.name, value: '' }] : []),
-      ...(variant.option3 ? [{ name: variant.option3.name, value: '' }] : []),
-    ]}
-    onClose={() => setShowPopup(false)} // Properly defined onClose
-    onSave={handleSaveNewVariant} // Pass the function with the correct parameters
-  />
-)}
-
-
+        {showPopup && (
+          <NewVariantPopup
+            existingOptions={[
+              { name: variant.option.name, value: '' },
+              ...(variant.option2 ? [{ name: variant.option2.name, value: '' }] : []),
+              ...(variant.option3 ? [{ name: variant.option3.name, value: '' }] : []),
+            ]}
+            onClose={() => setShowPopup(false)}
+            onSave={handleSaveNewVariant}
+          />
+        )}
       </div>
     </div>
   );
