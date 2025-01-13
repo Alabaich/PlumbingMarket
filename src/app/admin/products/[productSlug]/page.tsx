@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
 import ProductTitleDescription from './components/ProductTitleDescription';
 import ProductStatus from './components/ProductStatus';
 import MediaManager from './components/MediaManager';
 import ProductTags from './components/ProductTags';
 import ProductOrganization from './components/ProductOrganization';
-import { Product } from './types';
+import { Product, Variant } from './types';
 import ProductVariants from './components/ProductVariants';
 import ProductDetails from './components/ProductDetails';
 import ProductAdditionalDetails from './components/ProductAdditional';
@@ -97,7 +97,9 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
 
 
-  const handleDeleteVariant = (variantId: string) => {
+
+
+  const handleDeleteVariant = async (variantId: string) => {
     if (!product) {
       console.error('Product data is missing.');
       return;
@@ -116,34 +118,61 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
   
       setProduct(updatedProduct); // Update local state
   
-      // Prepare data for Firestore update
       const db = getFirestore();
       if (!productSlug) return; // Early return if productSlug is null
       const productRef = doc(db, 'products', productSlug);
   
-      const flattenedUpdate = {
-        ...Object.entries(updatedVariants).reduce(
-          (acc, [key, value]) => ({
-            ...acc,
-            [`variants.${key}`]: value,
-          }),
-          {}
-        ),
-      };
-  
-      updateDoc(productRef, flattenedUpdate)
-        .then(() => {
-          alert('Variant deleted successfully!');
-          window.location.reload(); // Reload the page to reflect changes
-        })
-        .catch((error) => {
-          console.error('Error deleting variant:', error);
-          alert('Failed to delete the variant.');
+      try {
+        await updateDoc(productRef, {
+          [`variants.${variantId}`]: deleteField(), // Remove the specific variant field
         });
+        alert('Variant deleted successfully!');
+        window.location.reload(); // Reload the page to reflect changes
+      } catch (error) {
+        console.error('Error deleting variant:', error);
+        alert('Failed to delete the variant.');
+      }
     }
   };
   
-  
+
+
+
+  const handleAddVariant = (newVariant: Variant) => {
+    if (!product || !productSlug) return;
+
+    // Merge the new variant into the existing variants
+    const updatedVariants = {
+      ...product.variants,
+      [newVariant.id]: newVariant, // Use SKU as the key
+    };
+
+    // Update the product in state
+    const updatedProduct = { ...product, variants: updatedVariants };
+
+    // Update Firestore
+    const db = getFirestore();
+    const productRef = doc(db, 'products', productSlug);
+
+    updateDoc(productRef, { variants: updatedVariants })
+      .then(() => {
+        setProduct(updatedProduct); // Update local state
+        alert('Variant added successfully!');
+        // Redirect to the new variant page
+        window.location.href = `/products/${productSlug}/${newVariant.id}`;
+      })
+      .catch((err) => {
+        console.error('Error adding variant:', err);
+        alert('Failed to add variant.');
+      });
+  };
+
+
+
+
+
+
+
 
   if (loading) {
     return <div className="text-center mt-6">Loading...</div>;
@@ -191,59 +220,62 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
           )}
 
-{product.variants && Object.keys(product.variants).length === 1 && (
-  <OneVariant
-    productSlug={productSlug!}
-    variant={{
-      ...Object.values(product.variants)[0], // Extract the single variant
-      id: Object.keys(product.variants)[0], // Add the id dynamically
-    }}
-    onVariantUpdate={(updatedVariant) => {
-      // Update the single variant in the product
-      const updatedVariants = {
-        ...product.variants,
-        [updatedVariant.id]: updatedVariant,
-      };
-      handleInputChange({ variants: updatedVariants });
-    }}
-    onAddVariant={() => {
-      // Add another variant logic
-      const newVariantId = `variant_${Date.now()}`;
-      const newVariant = {
-        id: newVariantId,
-        price: 0, // Default price
-        compare_at_price: 0, // Default compare price
-        barcode: '',
-        cost: 0,
-        requires_shipping: false,
-        taxable: false,
-        weight: 0,
-        assigned_image: '', // Default empty image
-        finish: '', // Default empty finish
-        lead_time: '', // Default lead time
-        sqft: '', // Default sqft
-        option: { name: 'Size', value: '' }, // Default option
-      };
+          {product.variants && Object.keys(product.variants).length === 1 && (
+            <OneVariant
+              productSlug={productSlug!}
+              variant={{
+                ...Object.values(product.variants)[0], // Extract the single variant
+                id: Object.keys(product.variants)[0], // Add the id dynamically
+              }}
+              onVariantUpdate={(updatedVariant) => {
+                // Update the single variant in the product
+                const updatedVariants = {
+                  ...product.variants,
+                  [updatedVariant.id]: updatedVariant,
+                };
+                handleInputChange({ variants: updatedVariants });
+              }}
 
-      const updatedVariants = {
-        ...product.variants,
-        [newVariantId]: newVariant,
-      };
+              onAddVariant={handleAddVariant}
+              // onAddVariant={() => {
+              //   // Add another variant logic
+              //   const newVariantId = `variant_${Date.now()}`;
+              //   const newVariant = {
+              //     id: newVariantId,
+              //     price: 0, // Default price
+              //     compare_at_price: 0, // Default compare price
+              //     barcode: '',
+              //     cost: 0,
+              //     requires_shipping: false,
+              //     taxable: false,
+              //     weight: 0,
+              //     assigned_image: '', // Default empty image
+              //     finish: '', // Default empty finish
+              //     lead_time: '', // Default lead time
+              //     sqft: '', // Default sqft
+              //     option: { name: 'Size', value: '' }, // Default option
+              //   };
 
-      // Update product with the new variant
-      handleInputChange({ variants: updatedVariants });
-    }}
-    onDeleteVariant={(variantId) => {
-      handleDeleteVariant(variantId); // Pass the delete handler
-    }}
-  />
-)}
+              //   const updatedVariants = {
+              //     ...product.variants,
+              //     [newVariantId]: newVariant,
+              //   };
+
+              //   // Update product with the new variant
+              //   handleInputChange({ variants: updatedVariants });
+              // }}
+              onDeleteVariant={(variantId) => {
+                handleDeleteVariant(variantId); // Pass the delete handler
+              }}
+            />
+          )}
 
 
           {product.variants && Object.keys(product.variants).length > 1 && (
             <ProductVariants
               productSlug={productSlug!}
               variants={product.variants}
+              onDeleteVariant={(variantId) => handleDeleteVariant(variantId)} 
             />
           )}
 
