@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useUnsavedChanges } from '../../../context/UnsavedChangesContext';
 import { ECollection } from '../../types';
 import CollectionDetails from '../components/CollectionDetails';
+import CollectionImageManager from '../components/CollectionImageManager';
 
 const CollectionPage: React.FC = () => {
   const { collectionSlug } = useParams() as { collectionSlug: string };
@@ -120,8 +121,17 @@ const CollectionPage: React.FC = () => {
         </button>
       </div>
 
+
+      <div className="flex gap-2">
+        <div className="flex flex-col gap-2 w-full">      
+            <CollectionDetails collection={collection} onChange={handleInputChange} />
+            </div>
+        <div className="flex flex-col gap-2 w-[30%] min-w-[30%]">
+            <CollectionImageManager collectionSlug={collectionSlug} currentImageId={collection.image} onImageUpdate={(imageId) => handleInputChange({ image: imageId })} />
+        </div>
+      </div>
       {/* Collection Details */}
-      <CollectionDetails collection={collection} onChange={handleInputChange} />
+
     </form>
   );
 };
