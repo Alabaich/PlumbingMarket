@@ -17,15 +17,11 @@ html {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #fff;
+    --foreground: #2c2d2c;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
 
 h1{
   font-weight: 900;

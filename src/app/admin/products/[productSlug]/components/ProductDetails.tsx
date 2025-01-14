@@ -45,7 +45,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onChange }) =>
           type="text"
           value={warranty}
           onChange={(e) => handleInputChange('warranty', e.target.value)}
-          className="mt-1 p-2 border rounded-md w-full"
+          className="mt-1 p-2 text-sm border rounded-md w-full"
+          placeholder='Enter warranty information'
         />
       </div>
       <div>
@@ -54,7 +55,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onChange }) =>
           type="text"
           value={technicalSpecifications}
           onChange={(e) => handleInputChange('technical_specifications', e.target.value)}
-          className="mt-1 p-2 text-sm border rounded-md w-full text-gray-400"
+          className="mt-1 p-2 text-sm border rounded-md w-full"
+          placeholder='Link to technical specifications pdf'
         />
       </div>
       <div>
@@ -65,7 +67,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onChange }) =>
           type="text"
           value={installationAndMaintenance}
           onChange={(e) => handleInputChange('installation_and_maintenance', e.target.value)}
-          className="mt-1 p-2 text-sm  border rounded-md w-full text-gray-400"
+          className="mt-1 p-2 text-sm  border rounded-md w-full"
+          placeholder='link to installation and maintenance pdf'
         />
       </div>
     </div>

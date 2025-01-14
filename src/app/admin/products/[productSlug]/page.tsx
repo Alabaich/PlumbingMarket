@@ -178,7 +178,7 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
   return (
     <form onSubmit={handleSave} className="p-2 w-full flex flex-col gap-4 max-w-[100%]">
 
-      <div className="flex bg-white rounded-md p-2 justify-between items-center">
+      <div className="flex bg-white rounded-md p-2 justify-end items-center">
         <button
           type="submit"
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"

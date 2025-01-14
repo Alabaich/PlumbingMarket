@@ -127,7 +127,7 @@ const AddVariant: React.FC<AddVariantProps> = ({ productSlug, productData, onVar
         />
         <button
           onClick={handleSaveVariant}
-          className="px-4 py-2 bg-blue-50 text-blue-500 rounded-sm hover:bg-blue-100 min-w-[175px] flex justify-center items-center gap-2"
+          className="px-4 py-2 bg-blue-50 text-blue-500 rounded-md hover:bg-blue-100 min-w-[175px] flex justify-center items-center gap-2"
           disabled={saving}
         >
           {!saving && (
