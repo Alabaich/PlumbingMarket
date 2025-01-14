@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Product, Variant } from '../types';
+import { Product, Variant } from '../../types';
 
 export interface ShippingDetailsProps<T extends Product | Variant> {
   product: T;

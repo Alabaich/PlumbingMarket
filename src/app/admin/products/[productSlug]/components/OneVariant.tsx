@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Variant } from '../types';
+import { Variant } from '../../types';
 import NewVariantPopup from './NewVariantPopup';
 
 interface OneVariantProps {

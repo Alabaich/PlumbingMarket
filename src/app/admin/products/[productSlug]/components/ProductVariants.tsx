@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { Variant } from '../types'; // Import the Variant type
+import { Variant } from '../../types'; // Import the Variant type
 
 interface ProductVariantsProps {
   productSlug: string; // Pass the productSlug to generate variant links

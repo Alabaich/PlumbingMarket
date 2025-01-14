@@ -8,7 +8,7 @@ import ProductStatus from './components/ProductStatus';
 import MediaManager from './components/MediaManager';
 import ProductTags from './components/ProductTags';
 import ProductOrganization from './components/ProductOrganization';
-import { Product, Variant } from './types';
+import { Product, Variant } from '../types';
 import ProductVariants from './components/ProductVariants';
 import ProductDetails from './components/ProductDetails';
 import ProductAdditionalDetails from './components/ProductAdditional';

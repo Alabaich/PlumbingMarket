@@ -70,11 +70,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AuthProvider>
       <UnsavedChangesProvider>
-
         <ProtectedAdminLayout>
-
-          {children}
-
+          <div className="min-h-[100vh]">
+            {children}
+          </div>
         </ProtectedAdminLayout>
       </ UnsavedChangesProvider >
     </AuthProvider>

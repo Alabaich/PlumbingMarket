@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Product, Variant } from '../types';
+import { Product, Variant } from '../../types';
 
 export interface InventoryDetailsProps<T extends Product | Variant> {
   product: T;

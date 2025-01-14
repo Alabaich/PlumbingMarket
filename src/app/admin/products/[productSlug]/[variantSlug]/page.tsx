@@ -10,7 +10,7 @@ import InventoryDetails from '../components/InventoryDetails';
 import AssignVariantImage from '../components/AssignVariantImage';
 import VariantOptionsEditor from '../components/OptionsVariant';
 import ProductVariantNavigator from '../components/ProductVariantNavigator';
-import { Variant, MediaItem } from '../types';
+import { Variant, MediaItem } from '../../types';
 
 interface VariantPageProps {
   params: Promise<{ productSlug: string; variantSlug: string }>;

@@ -62,4 +62,18 @@ export interface MediaItem {
     weight: number;
     requires_shipping: boolean; 
   }
+
+  export interface Condition {
+    conditionBy: string;
+    conditionWhat: string;
+    toWhat: string
+  }
   
+  export interface ECollection {
+    id: string;
+    title?: string;
+    conditions?: Condition[];
+    description?: string;
+    image?: string;
+    categoryPath?: Category[];
+  }

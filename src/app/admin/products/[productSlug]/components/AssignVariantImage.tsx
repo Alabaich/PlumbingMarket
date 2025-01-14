@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MediaItem, Product, Variant } from '../types';
+import { MediaItem, Product, Variant } from '../../types';
 import { useUnsavedChanges } from '../../../context/UnsavedChangesContext';
 
 interface AssignVariantImageProps {

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { getFirestore, doc, updateDoc } from 'firebase/firestore';
-import { Variant, Product } from '../types';
+import { Variant, Product } from '../../types';
 import Image from 'next/image';
 
 interface AddVariantProps {
