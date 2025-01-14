@@ -17,6 +17,7 @@ import InventoryDetails from './components/InventoryDetails';
 import ShippingDetails from './components/ShippingDetails';
 import AddVariant from './components/AddVariants';
 import OneVariant from './components/OneVariant';
+import CategoryPath from './components/ProductCategoryPath';
 import { ProductAdditionalDetailsProps } from './components/ProductAdditional';
 
 
@@ -324,6 +325,12 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
             </>
           )}
+          <CategoryPath
+  categoryPath={product.categoryPath || []}
+  onCategoryPathUpdate={(updatedPath) =>
+    handleInputChange({ categoryPath: updatedPath })
+  }
+/>
 
         </div>
         <div className="flex flex-col gap-4 w-[20%] ">
@@ -344,6 +351,9 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
             />
 
           )}
+
+
+
 
 
         </div>
