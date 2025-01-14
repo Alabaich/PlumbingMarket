@@ -182,15 +182,16 @@ const VariantPage: React.FC<VariantPageProps> = ({ params }) => {
             variants={variantsList}
             currentVariantId={variantSlug!}
           />
-          <ShippingDetails
-            product={variant}
-            onChange={(updatedFields) => handleInputChange(updatedFields)}
-          />
           <InventoryDetails
             product={productData}
             onChange={(updatedFields) => handleInputChange(updatedFields)}
             variantId={variantSlug || undefined}
           />
+          <ShippingDetails
+            product={variant}
+            onChange={(updatedFields) => handleInputChange(updatedFields)}
+          />
+
         </div>
         <div className="flex flex-col gap-4 w-full">
           <AssignVariantImage

@@ -10,6 +10,11 @@ export interface MediaItem {
     name: string;
     value: string;
   }
+
+  export interface Category {
+    id: string;
+    name: string;
+  }
   
   
   export interface Variant {
@@ -33,6 +38,7 @@ export interface MediaItem {
   
   
   export interface Product {
+    categoryPath: Category[];
     title: string;
     description: string;
     published: boolean;

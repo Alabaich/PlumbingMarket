@@ -167,6 +167,17 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
       });
   };
 
+  const navigateToProductPage = () => {
+    if (!product || !productSlug) return;
+
+    const categoryPath = (product.categoryPath || [])
+      .map((cat) => cat.id)
+      .join('/');
+
+    const productPageUrl = `/${categoryPath}/${productSlug}`;
+    window.open(productPageUrl, '_blank'); // Open in a new tab
+  };
+
   if (loading) {
     return <div className="text-center mt-6">Loading...</div>;
   }
@@ -178,7 +189,19 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
   return (
     <form onSubmit={handleSave} className="p-2 w-full flex flex-col gap-4 max-w-[100%]">
 
-      <div className="flex bg-white rounded-md p-2 justify-end items-center">
+      <div className="flex bg-white rounded-md p-2 justify-end items-center gap-2">
+      <button
+          type="button"
+          onClick={navigateToProductPage}
+          className="p-2 bg-blue-50 hover:bg-blue-100 rounded-md flex items-center"
+          title="View Product"
+        >
+          <img
+            src="/icons/eye.svg"
+            alt="View Product"
+            className="w-5 h-5"
+          />
+        </button>
         <button
           type="submit"
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"

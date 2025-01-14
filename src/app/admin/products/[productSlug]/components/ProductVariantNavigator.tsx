@@ -149,7 +149,7 @@ const ProductVariantNavigator: React.FC<ProductVariantNavigatorProps> = ({
                         onClick={() => handleVariantClick(variant.id)}
                         className={`flex items-center gap-3 p-2 rounded-md cursor-pointer ${variant.id === currentVariantId
                                 ? 'bg-blue-50 border-blue-500'
-                                : 'hover:bg-gray-100'
+                                : 'hover:bg-blue-100'
                             }`}
                     >
                         {imageMap[variant.id] ? (
