@@ -18,6 +18,7 @@ import ShippingDetails from './components/ShippingDetails';
 import AddVariant from './components/AddVariants';
 import OneVariant from './components/OneVariant';
 import CategoryPath from './components/ProductCategoryPath';
+import ProductCollections from './components/ProductCollections';
 import { ProductAdditionalDetailsProps } from './components/ProductAdditional';
 
 
@@ -352,6 +353,11 @@ const ProductPage: React.FC<{ params: Promise<{ productSlug: string }> }> = ({ p
 
           )}
 
+{productSlug && (
+        <div className="mt-6">
+          <ProductCollections productSlug={productSlug} />
+        </div>
+      )}
 
 
 

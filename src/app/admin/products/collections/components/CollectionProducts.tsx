@@ -4,12 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFirestore, doc, getDoc, collection, query, getDocs } from 'firebase/firestore';
 import { Product, MediaItem, Variant } from '../../types';
+import Image from 'next/image';
 
 interface CollectionProductsProps {
   collectionId: string; // ID of the collection to fetch
   products: string[]; // Initial products from the parent component
   onProductsUpdate: (updatedProducts: string[]) => void; // Callback to update the parent
 }
+
+const getIconPath = (name: string) => `/icons/${name.toLowerCase()}.svg`;
 
 const CollectionProducts: React.FC<CollectionProductsProps> = ({ collectionId, products, onProductsUpdate }) => {
   const router = useRouter();
@@ -108,7 +111,7 @@ const CollectionProducts: React.FC<CollectionProductsProps> = ({ collectionId, p
   };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-md">
+    <div className="p-4 bg-white shadow-sm rounded-md">
       <h2 className="text-lg font-bold mb-4">Collection Products</h2>
       <ul className="space-y-4">
         {localProducts.map((product, index) => (
@@ -139,10 +142,16 @@ const CollectionProducts: React.FC<CollectionProductsProps> = ({ collectionId, p
               </div>
             </div>
             <button
-              className="text-sm text-red-500 hover:underline"
+              className="text-sm text-red-500 hover:underline p-2 shadow-sm hover:shadow-md"
               onClick={() => handleRemoveProduct(product.slug)}
             >
-              Remove
+                                  <Image
+                                      src={getIconPath('trash full small')}
+                                      alt="Settings Icon"
+                                      width={19}
+                                      height={19}
+
+                                  />
             </button>
           </li>
         ))}

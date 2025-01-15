@@ -22,7 +22,7 @@ const CollectionDetails: React.FC<CollectionDetailsProps> = ({ collection, onCha
   };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-md flex flex-col gap-4">
+    <div className="p-4 bg-white shadow-sm rounded-md flex flex-col gap-4">
       {/* Collection Title */}
       <div>
         <label className="block text-sm font-medium text-gray-700">Title</label>
