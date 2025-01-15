@@ -7,10 +7,12 @@ import { useUnsavedChanges } from '../../../context/UnsavedChangesContext';
 import { ECollection } from '../../types';
 import CollectionDetails from '../components/CollectionDetails';
 import CollectionImageManager from '../components/CollectionImageManager';
+import CollectionProducts from '../components/CollectionProducts';
 
 const CollectionPage: React.FC = () => {
   const { collectionSlug } = useParams() as { collectionSlug: string };
   const [collection, setCollection] = useState<ECollection | null>(null);
+  const [products, setProducts] = useState<string[]>([]); // State to hold the product slugs
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { setSaveCallback, setUnsavedChanges } = useUnsavedChanges();
@@ -43,6 +45,7 @@ const CollectionPage: React.FC = () => {
             categoryPath: collectionData.categoryPath || [],
             image: collectionData.image || '',
           });
+          setProducts(collectionData.Products || []); // Fetch the products field
         }
       } catch (error) {
         console.error('Error fetching collection:', error);
@@ -66,7 +69,12 @@ const CollectionPage: React.FC = () => {
     });
     setUnsavedChanges(true);
   };
-  
+
+  // Handle product updates
+  const handleProductsUpdate = (updatedProducts: string[]) => {
+    setProducts(updatedProducts);
+    setUnsavedChanges(true);
+  };
 
   // Save changes to Firestore
   const handleSave = useCallback(async () => {
@@ -77,7 +85,10 @@ const CollectionPage: React.FC = () => {
     const collectionRef = doc(db, 'collections', collectionSlug);
 
     try {
-      await updateDoc(collectionRef, { ...collection });
+      await updateDoc(collectionRef, {
+        ...collection,
+        Products: products, // Save the updated products field
+      });
       setUnsavedChanges(false);
       alert('Collection saved successfully!');
     } catch (error) {
@@ -86,7 +97,7 @@ const CollectionPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  }, [collectionSlug, collection, setUnsavedChanges]);
+  }, [collectionSlug, collection, products, setUnsavedChanges]);
 
   // Set up the save callback
   useEffect(() => {
@@ -121,17 +132,23 @@ const CollectionPage: React.FC = () => {
         </button>
       </div>
 
-
       <div className="flex gap-2">
-        <div className="flex flex-col gap-2 w-full">      
-            <CollectionDetails collection={collection} onChange={handleInputChange} />
-            </div>
+        <div className="flex flex-col gap-2 w-full">
+          <CollectionDetails collection={collection} onChange={handleInputChange} />
+          <CollectionProducts
+            collectionId={collectionSlug}
+            products={products} // Pass the fetched products as props
+            onProductsUpdate={handleProductsUpdate} // Update products state
+          />
+        </div>
         <div className="flex flex-col gap-2 w-[30%] min-w-[30%]">
-            <CollectionImageManager collectionSlug={collectionSlug} currentImageId={collection.image} onImageUpdate={(imageId) => handleInputChange({ image: imageId })} />
+          <CollectionImageManager
+            collectionSlug={collectionSlug}
+            currentImageId={collection.image}
+            onImageUpdate={(imageId) => handleInputChange({ image: imageId })}
+          />
         </div>
       </div>
-      {/* Collection Details */}
-
     </form>
   );
 };

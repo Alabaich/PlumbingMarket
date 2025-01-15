@@ -76,4 +76,5 @@ export interface MediaItem {
     description?: string;
     image?: string;
     categoryPath?: Category[];
+    products?: string[];
   }
